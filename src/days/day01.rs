@@ -1,4 +1,23 @@
-pub fn main() {}
+pub fn main() -> i32 {
+    let lines = INPUT.trim().lines();
+
+    let unsorted_pairs = lines.map(|line| line.split_at(5));
+
+    let mut left: Vec<i32> = vec![];
+    let mut right: Vec<i32> = vec![];
+
+    unsorted_pairs.for_each(|(l, r)| {
+        left.push(l.parse().unwrap());
+        right.push(r.trim().parse().unwrap());
+    });
+
+    left.sort();
+    right.sort();
+
+    let diffs = left.iter().enumerate().map(|(i, x)| (x - right[i]).abs());
+
+    diffs.sum()
+}
 
 const INPUT: &str = "
 64256   78813

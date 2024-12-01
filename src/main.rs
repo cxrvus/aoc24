@@ -2,5 +2,6 @@ mod days;
 use days::*;
 
 fn main() {
-    println!("Hello, world!");
+    let result = day01::main();
+    println!("{result}");
 }
