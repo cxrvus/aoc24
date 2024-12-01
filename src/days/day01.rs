@@ -1,4 +1,4 @@
-pub fn main() -> i32 {
+fn parse_input() -> (Vec<i32>, Vec<i32>) {
 	let lines = INPUT.trim().lines();
 
 	let str_pairs = lines.map(|line| line.split_at(5));
@@ -6,13 +6,42 @@ pub fn main() -> i32 {
 		str_pairs.map(|(l, r)| (l.parse::<i32>().unwrap(), r.trim().parse::<i32>().unwrap()));
 
 	let (mut left, mut right): (Vec<i32>, Vec<i32>) = int_pairs.unzip();
+
 	left.sort();
 	right.sort();
 
-	let diffs = left.iter().enumerate().map(|(i, x)| (x - right[i]).abs());
+	(left, right)
+}
 
+pub fn part1() -> i32 {
+	let (left, right) = parse_input();
+	let diffs = left.iter().enumerate().map(|(i, x)| (x - right[i]).abs());
 	diffs.sum()
 }
+
+pub fn part2() -> i32 {
+	let (left, right) = parse_input();
+	let mut sum = 0;
+
+	let len = left.len();
+	for value in left {
+		if let Some(mut i) = right.iter().position(|x| *x == value) {
+			while i < len && right[i] == value {
+				sum += right[i];
+				i += 1;
+			}
+		}
+	}
+
+	sum
+}
+
+// const INPUT: &str = "
+// 00001   00001
+// 00001   00001
+// 00002   00001
+// 00002   00002
+// ";
 
 const INPUT: &str = "
 64256   78813
