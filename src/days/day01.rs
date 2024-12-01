@@ -1,16 +1,11 @@
 pub fn main() -> i32 {
 	let lines = INPUT.trim().lines();
 
-	let unsorted_pairs = lines.map(|line| line.split_at(5));
+	let str_pairs = lines.map(|line| line.split_at(5));
+	let int_pairs =
+		str_pairs.map(|(l, r)| (l.parse::<i32>().unwrap(), r.trim().parse::<i32>().unwrap()));
 
-	let mut left: Vec<i32> = vec![];
-	let mut right: Vec<i32> = vec![];
-
-	unsorted_pairs.for_each(|(l, r)| {
-		left.push(l.parse().unwrap());
-		right.push(r.trim().parse().unwrap());
-	});
-
+	let (mut left, mut right): (Vec<i32>, Vec<i32>) = int_pairs.unzip();
 	left.sort();
 	right.sort();
 
