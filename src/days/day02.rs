@@ -12,75 +12,56 @@ fn get_reports() -> Vec<Vec<i32>> {
 
 pub fn part1() -> usize {
 	let reports = get_reports();
-	reports.iter().filter(|r| validate_report(r)).count()
+	count_valid_reports(reports)
 }
 
 pub fn part2() -> usize {
 	let reports = get_reports();
+	let mut faulty_reports: Vec<Vec<i32>> = vec![];
+	let mut safe_reports = 0;
+
+	for report in reports {
+		if let Some(faulty_index) = validate_report(&report) {
+			let mut faulty_report = report.clone();
+			faulty_report.remove(faulty_index);
+			faulty_reports.push(faulty_report);
+		} else {
+			safe_reports += 1;
+		}
+	}
+
+	safe_reports += count_valid_reports(faulty_reports);
+
+	safe_reports
+}
+
+fn count_valid_reports(reports: Vec<Vec<i32>>) -> usize {
 	reports
 		.iter()
-		.filter(|r| validate_report_dampened(r))
+		.filter(|r| validate_report(r).is_none())
 		.count()
 }
 
-fn validate_report(report: &[i32]) -> bool {
+// returns faulty index
+fn validate_report(report: &[i32]) -> Option<usize> {
 	let mut last_is_increasing: Option<bool> = None;
 	for i in 0..report.len() - 1 {
 		let increase = report[i + 1] - report[i];
 		let diff = increase.abs();
 
 		if !(1..=3).contains(&diff) {
-			return false;
+			return Some(i);
 		}
 
 		let is_increasing = increase > 0;
 		if let Some(last_is_increasing) = last_is_increasing {
 			if is_increasing != last_is_increasing {
-				return false;
+				return Some(i);
 			}
 		}
 		last_is_increasing = Some(is_increasing);
 	}
-	true
-}
-
-fn validate_report_dampened(report: &[i32]) -> bool {
-	let mut prev_is_increasing: Option<bool> = None;
-	let mut failed_once = false;
-	let mut failed_prev = false;
-
-	for i in 0..report.len() - 1 {
-		if failed_prev {
-			failed_prev = false;
-			continue;
-		}
-
-		let mut invalid = false;
-
-		let increase = report[i + 1] - report[i];
-		let diff = increase.abs();
-		let is_increasing = increase > 0;
-
-		if !(1..=3).contains(&diff) {
-			invalid = true;
-		} else if let Some(last_is_increasing) = prev_is_increasing {
-			if is_increasing != last_is_increasing {
-				invalid = true;
-			}
-		}
-
-		if invalid {
-			if failed_once {
-				return false;
-			} else {
-				failed_once = true;
-				failed_prev = true;
-			}
-		} else {
-			prev_is_increasing = Some(is_increasing);
-		}
-	}
-	true
+	None
 }
 
 const XXINPUT: &str = "
@@ -93,7 +74,7 @@ const XXINPUT: &str = "
 1 2 3 4 3
 ";
 
-const INPUT: &str = "
+const XINPUT: &str = "
 7 6 4 2 1
 1 2 7 8 9
 9 7 6 2 1
@@ -102,7 +83,7 @@ const INPUT: &str = "
 1 3 6 7 9
 ";
 
-const XINPUT: &str = "
+const INPUT: &str = "
 48 51 52 53 52
 86 87 88 91 91
 22 25 28 31 32 36
