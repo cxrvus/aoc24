@@ -1,5 +1,19 @@
+use regex::{self, Captures, Regex};
+
+fn get_pattern() -> Regex {
+	let pattern = r#"mul\((\d{1,3}),(\d{1,3})\)"#;
+	Regex::new(pattern).unwrap()
+}
+
 pub fn part1() -> i32 {
-	todo!();
+	get_pattern()
+		.captures_iter(INPUT)
+		.map(|caps| parse_cap(&caps, 1) * parse_cap(&caps, 2))
+		.sum()
+}
+
+fn parse_cap(caps: &Captures, i: usize) -> i32 {
+	caps[i].parse().unwrap()
 }
 
 const INPUT: &str = "
