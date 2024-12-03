@@ -17,14 +17,25 @@ pub fn part1() -> usize {
 
 pub fn part2() -> usize {
 	let reports = get_reports();
-	let mut faulty_reports: Vec<Vec<i32>> = vec![];
 	let mut safe_reports = 0;
+	let mut dampened_safe_reports = 0;
 
 	for report in reports {
-		todo!()
+		if validate_report(&report) {
+			safe_reports += 1;
+		} else {
+			for i in 0..report.len() {
+				let mut report_copy = report.clone();
+				report_copy.remove(i);
+				if validate_report(&report_copy) {
+					dampened_safe_reports += 1;
+					break;
+				}
+			}
+		}
 	}
 
-	safe_reports
+	safe_reports + dampened_safe_reports
 }
 
 fn validate_report(report: &[i32]) -> bool {
