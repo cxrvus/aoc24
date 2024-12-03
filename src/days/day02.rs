@@ -12,7 +12,7 @@ fn get_reports() -> Vec<Vec<i32>> {
 
 pub fn part1() -> usize {
 	let reports = get_reports();
-	count_valid_reports(reports)
+	reports.iter().filter(|r| validate_report(r)).count()
 }
 
 pub fn part2() -> usize {
@@ -21,47 +21,31 @@ pub fn part2() -> usize {
 	let mut safe_reports = 0;
 
 	for report in reports {
-		if let Some(faulty_index) = validate_report(&report) {
-			let mut faulty_report = report.clone();
-			faulty_report.remove(faulty_index);
-			faulty_reports.push(faulty_report);
-		} else {
-			safe_reports += 1;
-		}
+		todo!()
 	}
-
-	safe_reports += count_valid_reports(faulty_reports);
 
 	safe_reports
 }
 
-fn count_valid_reports(reports: Vec<Vec<i32>>) -> usize {
-	reports
-		.iter()
-		.filter(|r| validate_report(r).is_none())
-		.count()
-}
-
-// returns faulty index
-fn validate_report(report: &[i32]) -> Option<usize> {
+fn validate_report(report: &[i32]) -> bool {
 	let mut last_is_increasing: Option<bool> = None;
 	for i in 0..report.len() - 1 {
 		let increase = report[i + 1] - report[i];
 		let diff = increase.abs();
 
 		if !(1..=3).contains(&diff) {
-			return Some(i);
+			return false;
 		}
 
 		let is_increasing = increase > 0;
 		if let Some(last_is_increasing) = last_is_increasing {
 			if is_increasing != last_is_increasing {
-				return Some(i);
+				return false;
 			}
 		}
 		last_is_increasing = Some(is_increasing);
 	}
-	None
+	true
 }
 
 const XXINPUT: &str = "
