@@ -1,34 +1,51 @@
 use regex::{self, Captures, Regex};
 
-fn get_pattern() -> Regex {
+fn get_re() -> Regex {
 	let pattern = r#"mul\((\d{1,3}),(\d{1,3})\)"#;
 	Regex::new(pattern).unwrap()
 }
 
 pub fn part1() -> i32 {
-	execute_mut(get_pattern(), INPUT)
+	execute_mul(&get_re(), INPUT)
 }
 
 pub fn part2() -> i32 {
-	let enabled = true;
+	let re = get_re();
 
-	todo!();
+	let mut result = 0;
+	let mut enabled = true;
+	let mut input = INPUT;
+
+	loop {
+		let sep = if enabled { "don't()" } else { "do()" };
+		let (current, next) = halve(input, sep);
+
+		if enabled {
+			result += execute_mul(&re, current);
+		}
+
+		if let Some(next) = next {
+			input = next;
+			enabled = !enabled;
+		} else {
+			break;
+		}
+	}
+
+	result
 }
 
-fn halve(input: &str, sep: &str) -> (String, Option<String>) {
+fn halve<'a>(input: &'a str, sep: &str) -> (&'a str, Option<&'a str>) {
 	let i = input.find(sep);
 	if let Some(i) = i {
 		let i = i + sep.len();
-		(
-			input.get(0..i).unwrap().into(),
-			input.get(i..).map(|s| s.into()),
-		)
+		(input.get(0..i).unwrap(), input.get(i..))
 	} else {
-		(input.into(), None)
+		(input, None)
 	}
 }
 
-fn execute_mut(re: Regex, input: &str) -> i32 {
+fn execute_mul(re: &Regex, input: &str) -> i32 {
 	re.captures_iter(input)
 		.map(|caps| parse_cap(&caps, 1) * parse_cap(&caps, 2))
 		.sum()
