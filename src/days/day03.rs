@@ -9,6 +9,25 @@ pub fn part1() -> i32 {
 	execute_mut(get_pattern(), INPUT)
 }
 
+pub fn part2() -> i32 {
+	let enabled = true;
+
+	todo!();
+}
+
+fn halve(input: &str, sep: &str) -> (String, Option<String>) {
+	let i = input.find(sep);
+	if let Some(i) = i {
+		let i = i + sep.len();
+		(
+			input.get(0..i).unwrap().into(),
+			input.get(i..).map(|s| s.into()),
+		)
+	} else {
+		(input.into(), None)
+	}
+}
+
 fn execute_mut(re: Regex, input: &str) -> i32 {
 	re.captures_iter(input)
 		.map(|caps| parse_cap(&caps, 1) * parse_cap(&caps, 2))
