@@ -6,8 +6,11 @@ fn get_pattern() -> Regex {
 }
 
 pub fn part1() -> i32 {
-	get_pattern()
-		.captures_iter(INPUT)
+	execute_mut(get_pattern(), INPUT)
+}
+
+fn execute_mut(re: Regex, input: &str) -> i32 {
+	re.captures_iter(input)
 		.map(|caps| parse_cap(&caps, 1) * parse_cap(&caps, 2))
 		.sum()
 }
