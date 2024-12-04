@@ -1,12 +1,75 @@
+use Xmas::*;
+
+#[derive(Debug, Clone)]
+enum Xmas {
+	X,
+	M,
+	A,
+	S,
+}
+
+impl From<u8> for Xmas {
+	fn from(value: u8) -> Self {
+		match value {
+			b'X' => X,
+			b'M' => M,
+			b'A' => A,
+			b'S' => S,
+			_ => panic!("illegal char"),
+		}
+	}
+}
+
+type Line = Vec<Xmas>;
+type Matrix = Vec<Line>;
+
+fn get_matrix() -> Matrix {
+	INPUT
+		.trim()
+		.lines()
+		.map(|line| line.bytes().map(|char| char.into()).collect())
+		.collect()
+}
+
+fn get_lines() -> Vec<Line> {
+	let matrix = get_matrix();
+	let height = matrix.len();
+	let width = matrix[0].len();
+
+	let horizontal = matrix.clone();
+
+	let vertical = (0..width)
+		.map(|i| matrix.iter().map(|row| row[i].clone()).collect())
+		.collect::<Matrix>();
+
+	let lines = [horizontal, vertical].concat();
+	let mut reversed_lines = lines.clone();
+	reversed_lines.iter_mut().for_each(|l| l.reverse());
+
+	// INPUT.lines().map(|l| l.chars().collect());
+	// get lines from 8 directions
+	// idea: find all Xs and start trees from those, instead of iterating thru all possible lines
+	[lines, reversed_lines].concat()
+}
+
 pub fn part1() -> i32 {
+	dbg!(get_matrix());
+	// todo: tree analysis
+	// todo: reversed
 	todo!()
 }
 
-pub fn part2() -> i32 {
-	todo!()
-}
+// pub fn part3() -> i32 {
+// 	todo!()
+// }
 
 const INPUT: &str = "
+XMAS
+XMAS
+SAMX
+";
+
+const XINPUT: &str = "
 MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -19,7 +82,7 @@ MAMMMXMMMM
 MXMXAXMASX
 ";
 
-const XINPUT: &str = "
+const XXINPUT: &str = "
 SMASMXMXSAMXSASXXAMXMAXXXMSXMASAMAXMASXSMXXMXMXAMXXXSAMXMXMSMXSXMASMSAAAXMASXMSMMSSXMMSSMXSMXXXMAXMMMXMXAMXMXAXMASXMMMXAXMAMSAMXAMMAAXXMASAM
 AMASAASAMAMSAMMXMSXSAXSMSXMAMXSXMASAAAAAXSXMXMASXMMMSXSMMXMAXAAASMMAMXXMSAMXMASXAAXAXAXSAMXMSMSMSXSAMMSMXXAXMSMSMSASXXXXMXSASXSXSXSSXSAMXSAX
 MSAMMMMASAMMAMXSXXAMMMXAAXMSAMXAMASMMMSMMSAMXXAMAAXASMMAASXMSMSMMSMXMAXMXMAMMAMMMMSMMSMXSAMXAAAAXASASAAAMSMXAMAAASAMAASXSAMAMXMAMAMAASAMAXMM
