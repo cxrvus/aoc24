@@ -34,20 +34,27 @@ impl Xmas {
 struct Matrix(Vec<Vec<Xmas>>);
 
 impl Matrix {
-	fn height(&self) -> usize {
-		self.0.len()
+	fn height(&self) -> i32 {
+		self.0.len() as i32
 	}
 
-	fn width(&self) -> usize {
-		self.0[0].len()
+	fn width(&self) -> i32 {
+		self.0[0].len() as i32
 	}
 
-	fn at(&self, x: usize, y: usize) -> Option<&Xmas> {
-		if x >= self.width() || y >= self.height() {
-			None
+	fn at(&self, x: i32, y: i32) -> Option<&Xmas> {
+		if (0..self.width()).contains(&x) && (0..self.height()).contains(&y) {
+			Some(&self.0[y as usize][x as usize])
 		} else {
-			Some(&self.0[y][x])
+			None
 		}
+	}
+
+	fn at_relative(&self, x: i32, y: i32, x_dir: i32, y_dir: i32) -> Option<&Xmas> {
+		let x = x + x_dir;
+		let y = y + y_dir;
+
+		self.at(x, y)
 	}
 }
 
@@ -83,9 +90,8 @@ fn count_occurrences(matrix: &Matrix, x: i32, y: i32) -> usize {
 	for dir in directions {
 		let mut previous = X;
 		for i in 1.. {
-			let (dir_x, dir_y) = (dir.0 * i, dir.1 * i);
-			let (x, y) = ((dir_x + x) as usize, (dir_y + y) as usize);
-			let pointer = matrix.at(x, y);
+			let (x_dir, y_dir) = (dir.0 * i, dir.1 * i);
+			let pointer = matrix.at_relative(x, y, x_dir, y_dir);
 
 			if let Some(pointer) = pointer {
 				let successor = previous.successor().unwrap();
@@ -120,9 +126,36 @@ fn directions() -> [(i32, i32); 8] {
 	]
 }
 
-// pub fn part2() -> i32 {
-// 	todo!()
-// }
+pub fn part2() -> usize {
+	let matrix = get_matrix();
+
+	let mut count = 0;
+
+	for y in 0..matrix.height() {
+		for x in 0..matrix.width() {
+			if *matrix.at(x, y).unwrap() == A && check_for_cross(&matrix, x, y).unwrap_or(false) {
+				count += 1;
+			}
+		}
+	}
+
+	count
+}
+
+fn check_for_cross(matrix: &Matrix, x: i32, y: i32) -> Option<bool> {
+	let upper_left = matrix.at_relative(x, y, -1, -1)?;
+	let upper_right = matrix.at_relative(x, y, 1, -1)?;
+	let lower_left = matrix.at_relative(x, y, -1, 1)?;
+	let lower_right = matrix.at_relative(x, y, 1, 1)?;
+
+	let slash_corners = (lower_left, upper_right);
+	let backslash_corners = (upper_left, lower_right);
+
+	let valid =
+		matches!(slash_corners, (M, S) | (S, M)) && matches!(backslash_corners, (M, S) | (S, M));
+
+	Some(valid)
+}
 
 const XXINPUT: &str = "
 XMMAS
