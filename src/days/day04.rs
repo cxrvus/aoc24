@@ -1,6 +1,6 @@
 use Xmas::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Xmas {
 	X,
 	M,
@@ -15,61 +15,129 @@ impl From<u8> for Xmas {
 			b'M' => M,
 			b'A' => A,
 			b'S' => S,
-			_ => panic!("illegal char"),
+			other => panic!("illegal char: {other}"),
 		}
 	}
 }
 
-type Line = Vec<Xmas>;
-type Matrix = Vec<Line>;
+impl Xmas {
+	pub fn successor(&self) -> Option<Self> {
+		match self {
+			X => Some(M),
+			M => Some(A),
+			A => Some(S),
+			S => None,
+		}
+	}
+}
+
+struct Matrix(Vec<Vec<Xmas>>);
+
+impl Matrix {
+	fn height(&self) -> usize {
+		self.0.len()
+	}
+
+	fn width(&self) -> usize {
+		self.0[0].len()
+	}
+
+	fn at(&self, x: usize, y: usize) -> Option<&Xmas> {
+		if x >= self.width() || y >= self.height() {
+			None
+		} else {
+			Some(&self.0[y][x])
+		}
+	}
+}
 
 fn get_matrix() -> Matrix {
-	INPUT
+	let matrix = INPUT
 		.trim()
 		.lines()
 		.map(|line| line.bytes().map(|char| char.into()).collect())
-		.collect()
+		.collect::<Vec<_>>();
+	Matrix(matrix)
 }
 
-fn get_lines() -> Vec<Line> {
+pub fn part1() -> usize {
 	let matrix = get_matrix();
-	let height = matrix.len();
-	let width = matrix[0].len();
 
-	let horizontal = matrix.clone();
+	let mut count = 0;
 
-	let vertical = (0..width)
-		.map(|i| matrix.iter().map(|row| row[i].clone()).collect())
-		.collect::<Matrix>();
+	for y in 0..matrix.height() {
+		for x in 0..matrix.width() {
+			if *matrix.at(x, y).unwrap() == X {
+				count += count_occurrences(&matrix, x as i32, y as i32);
+			}
+		}
+	}
 
-	let lines = [horizontal, vertical].concat();
-	let mut reversed_lines = lines.clone();
-	reversed_lines.iter_mut().for_each(|l| l.reverse());
-
-	// INPUT.lines().map(|l| l.chars().collect());
-	// get lines from 8 directions
-	// idea: find all Xs and start trees from those, instead of iterating thru all possible lines
-	[lines, reversed_lines].concat()
+	count
 }
 
-pub fn part1() -> i32 {
-	dbg!(get_matrix());
-	// todo: tree analysis
-	// todo: reversed
-	todo!()
+fn count_occurrences(matrix: &Matrix, x: i32, y: i32) -> usize {
+	let directions = directions();
+	let mut count = 0;
+
+	for dir in directions {
+		let mut branches: Vec<Xmas> = vec![X];
+
+		for i in 1.. {
+			let (dir_x, dir_y) = (dir.0 * i, dir.1 * i);
+			let (x, y) = ((dir_x + x) as usize, (dir_y + y) as usize);
+			let pointer = matrix.at(x, y);
+
+			if let Some(pointer) = pointer {
+				propagate(&mut branches, pointer);
+			} else {
+				break;
+			}
+		}
+
+		count += branches.iter().filter(|x| **x == S).count()
+	}
+
+	count
 }
 
-// pub fn part3() -> i32 {
+fn propagate(branches: &mut Vec<Xmas>, pointer: &Xmas) {
+	for i in 0..branches.len() {
+		let branch = &branches[i];
+		let successor = branch.successor();
+
+		if let Some(successor) = successor {
+			if *pointer == successor {
+				branches.push(successor);
+			}
+		}
+	}
+}
+
+fn directions() -> [(i32, i32); 8] {
+	[
+		(0, 1),
+		(1, 0),
+		(1, 1),
+		(0, -1),
+		(1, -1),
+		(-1, 0),
+		(-1, 1),
+		(-1, -1),
+	]
+}
+
+// pub fn part2() -> i32 {
 // 	todo!()
 // }
 
-const INPUT: &str = "
-XMAS
-XMAS
-SAMX
+const XINPUT: &str = "
+XMMAS
+XMASS
+SAMXS
 ";
 
-const XINPUT: &str = "
+const INPUT: &str = "
 MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
