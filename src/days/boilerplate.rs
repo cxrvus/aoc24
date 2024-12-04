@@ -1,8 +1,8 @@
-pub fn part1() -> i32 {
+pub fn part1() -> usize {
 	todo!()
 }
 
-pub fn part2() -> i32 {
+pub fn part2() -> usize {
 	todo!()
 }
 
