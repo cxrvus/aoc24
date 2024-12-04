@@ -81,37 +81,30 @@ fn count_occurrences(matrix: &Matrix, x: i32, y: i32) -> usize {
 	let mut count = 0;
 
 	for dir in directions {
-		let mut branches: Vec<Xmas> = vec![X];
-
+		let mut previous = X;
 		for i in 1.. {
 			let (dir_x, dir_y) = (dir.0 * i, dir.1 * i);
 			let (x, y) = ((dir_x + x) as usize, (dir_y + y) as usize);
 			let pointer = matrix.at(x, y);
 
 			if let Some(pointer) = pointer {
-				propagate(&mut branches, pointer);
+				let successor = previous.successor().unwrap();
+				if successor == *pointer {
+					if *pointer == S {
+						count += 1;
+					} else {
+						previous = pointer.clone();
+					}
+				} else {
+					break;
+				}
 			} else {
 				break;
 			}
 		}
-
-		count += branches.iter().filter(|x| **x == S).count()
 	}
 
 	count
-}
-
-fn propagate(branches: &mut Vec<Xmas>, pointer: &Xmas) {
-	for i in 0..branches.len() {
-		let branch = &branches[i];
-		let successor = branch.successor();
-
-		if let Some(successor) = successor {
-			if *pointer == successor {
-				branches.push(successor);
-			}
-		}
-	}
 }
 
 fn directions() -> [(i32, i32); 8] {
@@ -131,13 +124,13 @@ fn directions() -> [(i32, i32); 8] {
 // 	todo!()
 // }
 
-const XINPUT: &str = "
+const XXINPUT: &str = "
 XMMAS
 XMASS
 SAMXS
 ";
 
-const INPUT: &str = "
+const XINPUT: &str = "
 MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -150,7 +143,7 @@ MAMMMXMMMM
 MXMXAXMASX
 ";
 
-const XXINPUT: &str = "
+const INPUT: &str = "
 SMASMXMXSAMXSASXXAMXMAXXXMSXMASAMAXMASXSMXXMXMXAMXXXSAMXMXMSMXSXMASMSAAAXMASXMSMMSSXMMSSMXSMXXXMAXMMMXMXAMXMXAXMASXMMMXAXMAMSAMXAMMAAXXMASAM
 AMASAASAMAMSAMMXMSXSAXSMSXMAMXSXMASAAAAAXSXMXMASXMMMSXSMMXMAXAAASMMAMXXMSAMXMASXAAXAXAXSAMXMSMSMSXSAMMSMXXAXMSMSMSASXXXXMXSASXSXSXSSXSAMXSAX
 MSAMMMMASAMMAMXSXXAMMMXAAXMSAMXAMASMMMSMMSAMXXAMAAXASMMAASXMSMSMMSMXMAXMXMAMMAMMMMSMMSMXSAMXAAAAXASASAAAMSMXAMAAASAMAASXSAMAMXMAMAMAASAMAXMM
