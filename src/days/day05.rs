@@ -33,6 +33,19 @@ fn get_middle_number(update: &Update) -> u8 {
 	update[update.len() / 2]
 }
 
+fn validate_update(rules: &Rules, update: &Update) -> bool {
+	for (before, after) in rules {
+		if let Some(before_pos) = update.iter().position(|page| page == before) {
+			if let Some(after_pos) = update.iter().position(|page| page == after) {
+				if before_pos > after_pos {
+					return false;
+				}
+			}
+		}
+	}
+	true
+}
+
 fn fix_update(rules: &Rules, update: &mut Update) {
 	loop {
 		let mut unordered = false;
@@ -69,7 +82,7 @@ pub fn part1() -> usize {
 
 	updates
 		.iter()
-		// .filter(|update| validate_update(&rules, update))
+		.filter(|update| validate_update(&rules, update))
 		.map(|update| get_middle_number(update) as usize)
 		.sum()
 }
