@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 type Rules = Vec<(u8, u8)>;
 type Update = Vec<u8>;
 type Updates = Vec<Update>;
@@ -44,6 +46,17 @@ fn validate_update(update: &Update, rules: &Rules) -> bool {
 	true
 }
 
+fn update_cmp(rules: &Rules, current: &u8, next: &u8) -> Ordering {
+	if rules
+		.iter()
+		.any(|(before, after)| before == next && after == current)
+	{
+		Ordering::Less
+	} else {
+		Ordering::Equal
+	}
+}
+
 pub fn part1() -> usize {
 	let Sections { rules, updates } = Sections::parse();
 
@@ -55,10 +68,23 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
-	todo!()
+	let Sections { rules, updates } = Sections::parse();
+
+	let mut updates = updates;
+
+	updates
+		.iter_mut()
+		.for_each(|update| update.sort_by(|a, b| update_cmp(&rules, a, b)));
+
+	updates
+		.iter()
+		.map(|update| get_middle_number(update) as usize)
+		.sum()
 }
 
-const XINPUT: &str = "
+const INPUT: &str = TEST_INPUT;
+
+const TEST_INPUT: &str = "
 47|53
 97|13
 97|61
@@ -89,7 +115,7 @@ const XINPUT: &str = "
 97,13,75,29,47
 ";
 
-const INPUT: &str = "
+const PROD_INPUT: &str = "
 73|89
 78|59
 78|71
