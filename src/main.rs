@@ -3,6 +3,6 @@ use days::*;
 
 #[allow(warnings)]
 fn main() {
-	let result = day04::part2();
+	let result = day05::part1();
 	println!("{result}");
 }
