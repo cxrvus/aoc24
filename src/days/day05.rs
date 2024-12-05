@@ -1,11 +1,12 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, collections::BTreeMap};
 
+type PrioDict = BTreeMap<u8, usize>;
 type Rules = Vec<(u8, u8)>;
 type Update = Vec<u8>;
 type Updates = Vec<Update>;
 
 struct Sections {
-	rules: Rules,
+	priorities: PrioDict,
 	updates: Updates,
 }
 
@@ -14,18 +15,26 @@ impl Sections {
 		let parts = INPUT.trim().split("\n\n").collect::<Vec<_>>();
 		let (rules, updates) = (parts[0], parts[1]);
 
+		let updates: Updates = updates
+			.lines()
+			.map(|l| l.split(',').map(|n| n.parse().unwrap()).collect())
+			.collect();
+
 		let rules: Rules = rules
 			.lines()
 			.map(|l| (l.get(0..2).unwrap(), l.get(3..5).unwrap()))
 			.map(|(before, after)| (before.parse().unwrap(), after.parse().unwrap()))
 			.collect();
 
-		let updates: Updates = updates
-			.lines()
-			.map(|l| l.split(',').map(|n| n.parse().unwrap()).collect())
-			.collect();
+		let mut priorities = BTreeMap::new();
+		for (page, _) in rules {
+			*priorities.entry(page).or_insert(0) += 1;
+		}
 
-		Sections { rules, updates }
+		Sections {
+			priorities,
+			updates,
+		}
 	}
 }
 
@@ -33,64 +42,58 @@ fn get_middle_number(update: &Update) -> u8 {
 	update[update.len() / 2]
 }
 
-fn validate_update(update: &Update, rules: &Rules) -> bool {
-	for (before, after) in rules {
-		if let Some(before_pos) = update.iter().position(|page| page == before) {
-			if let Some(after_pos) = update.iter().position(|page| page == after) {
-				if before_pos > after_pos {
-					return false;
-				}
-			}
-		}
-	}
-	true
-}
-
-fn update_cmp(rules: &Rules, update: &Update, current: &u8) -> Ordering {
-	let predecessors = &update[0..update.iter().position(|u| u == current).unwrap()];
-	let mut allowed_successors = rules
-		.iter()
-		.filter(|(before, _)| before == current)
-		.map(|(_, after)| after);
-
-	let wrong_order = predecessors
-		.iter()
-		.any(|x| allowed_successors.any(|y| x == y));
-
-	if wrong_order {
-		Ordering::Less
-	} else {
-		Ordering::Equal
-	}
-}
+// fn validate_update(update: &Update, rules: &Rules) -> bool {
+// 	for (before, after) in rules {
+// 		if let Some(before_pos) = update.iter().position(|page| page == before) {
+// 			if let Some(after_pos) = update.iter().position(|page| page == after) {
+// 				if before_pos > after_pos {
+// 					return false;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	true
+// }
 
 pub fn part1() -> usize {
-	let Sections { rules, updates } = Sections::parse();
+	let Sections {
+		priorities,
+		updates,
+	} = Sections::parse();
 
 	updates
 		.iter()
-		.filter(|update| validate_update(update, &rules))
+		// .filter(|update| validate_update(update, &rules))
 		.map(|update| get_middle_number(update) as usize)
 		.sum()
 }
 
 pub fn part2() -> usize {
-	let Sections { rules, updates } = Sections::parse();
+	let Sections {
+		priorities,
+		updates,
+	} = Sections::parse();
 
+	let original_updates = updates.clone();
 	let mut updates = updates;
 
-	updates.iter_mut().for_each(|update| {
-		let cloned_update = update.clone();
-		update.sort_by(|current, _| update_cmp(&rules, &cloned_update, current))
-	});
+	dbg!(&priorities);
+
+	updates
+		.iter_mut()
+		.for_each(|update| update.sort_by_key(|x| priorities.get(x).unwrap_or(&0)));
+
+	// dbg!(&updates);
 
 	updates
 		.iter()
-		.map(|update| get_middle_number(update) as usize)
+		.enumerate()
+		.filter(|(i, update)| original_updates[*i] != updates[*i])
+		.map(|(_, update)| get_middle_number(update) as usize)
 		.sum()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
 
 const TEST_INPUT: &str = "
 47|53
