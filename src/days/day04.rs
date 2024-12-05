@@ -75,7 +75,7 @@ pub fn part1() -> usize {
 	for y in 0..matrix.height() {
 		for x in 0..matrix.width() {
 			if *matrix.at(x, y).unwrap() == X {
-				count += count_occurrences(&matrix, x as i32, y as i32);
+				count += count_occurrences(&matrix, x, y);
 			}
 		}
 	}
