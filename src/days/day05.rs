@@ -1,12 +1,11 @@
-use std::{cmp::Ordering, collections::BTreeMap};
+use std::cmp::{self, Ordering};
 
-type PrioDict = BTreeMap<u8, usize>;
 type Rules = Vec<(u8, u8)>;
 type Update = Vec<u8>;
 type Updates = Vec<Update>;
 
 struct Sections {
-	priorities: PrioDict,
+	rules: Rules,
 	updates: Updates,
 }
 
@@ -26,15 +25,7 @@ impl Sections {
 			.map(|(before, after)| (before.parse().unwrap(), after.parse().unwrap()))
 			.collect();
 
-		let mut priorities = BTreeMap::new();
-		for (page, _) in rules {
-			*priorities.entry(page).or_insert(0) += 1;
-		}
-
-		Sections {
-			priorities,
-			updates,
-		}
+		Sections { rules, updates }
 	}
 }
 
@@ -42,46 +33,56 @@ fn get_middle_number(update: &Update) -> u8 {
 	update[update.len() / 2]
 }
 
-// fn validate_update(update: &Update, rules: &Rules) -> bool {
-// 	for (before, after) in rules {
-// 		if let Some(before_pos) = update.iter().position(|page| page == before) {
-// 			if let Some(after_pos) = update.iter().position(|page| page == after) {
-// 				if before_pos > after_pos {
-// 					return false;
-// 				}
-// 			}
-// 		}
-// 	}
-// 	true
-// }
+fn validate_update(rules: &Rules, update: &Update) -> bool {
+	let page = update.last().unwrap();
+	validate_update_slice(rules, update, page)
+}
+
+fn validate_update_slice(rules: &Rules, update: &Update, page: &u8) -> bool {
+	let slice = update
+		.get(0..update.iter().position(|x| x == page).unwrap())
+		.unwrap();
+
+	for (before, after) in rules {
+		if let Some(before_pos) = slice.iter().position(|page| page == before) {
+			if let Some(after_pos) = slice.iter().position(|page| page == after) {
+				if before_pos > after_pos {
+					return false;
+				}
+			}
+		}
+	}
+	true
+}
+
+fn cmp_update(rules: &Rules, update: &Update, page: &u8) -> Ordering {
+	if validate_update_slice(rules, update, page) {
+		Ordering::Equal
+	} else {
+		Ordering::Less
+	}
+}
 
 pub fn part1() -> usize {
-	let Sections {
-		priorities,
-		updates,
-	} = Sections::parse();
+	let Sections { rules, updates } = Sections::parse();
 
 	updates
 		.iter()
-		// .filter(|update| validate_update(update, &rules))
+		.filter(|update| validate_update(&rules, update))
 		.map(|update| get_middle_number(update) as usize)
 		.sum()
 }
 
 pub fn part2() -> usize {
-	let Sections {
-		priorities,
-		updates,
-	} = Sections::parse();
+	let Sections { rules, updates } = Sections::parse();
 
 	let original_updates = updates.clone();
 	let mut updates = updates;
 
-	dbg!(&priorities);
-
-	updates
-		.iter_mut()
-		.for_each(|update| update.sort_by_key(|x| priorities.get(x).unwrap_or(&0)));
+	updates.iter_mut().for_each(|update| {
+		let original_update = update.clone();
+		update.sort_by(|page, _| cmp_update(&rules, &original_update, page));
+	});
 
 	// dbg!(&updates);
 
@@ -93,7 +94,7 @@ pub fn part2() -> usize {
 		.sum()
 }
 
-const INPUT: &str = PROD_INPUT;
+const INPUT: &str = TEST_INPUT;
 
 const TEST_INPUT: &str = "
 47|53
