@@ -6,6 +6,12 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const XINPUT: &str = "";
+const INPUT: &str = TEST_INPUT;
 
-const INPUT: &str = "";
+const TEST_INPUT: &str = "
+
+";
+
+const PROD_INPUT: &str = "
+
+";
