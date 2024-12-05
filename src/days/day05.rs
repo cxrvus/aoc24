@@ -46,11 +46,18 @@ fn validate_update(update: &Update, rules: &Rules) -> bool {
 	true
 }
 
-fn update_cmp(rules: &Rules, current: &u8, next: &u8) -> Ordering {
-	if rules
+fn update_cmp(rules: &Rules, update: &Update, current: &u8) -> Ordering {
+	let predecessors = &update[0..update.iter().position(|u| u == current).unwrap()];
+	let mut allowed_successors = rules
 		.iter()
-		.any(|(before, after)| before == next && after == current)
-	{
+		.filter(|(before, _)| before == current)
+		.map(|(_, after)| after);
+
+	let wrong_order = predecessors
+		.iter()
+		.any(|x| allowed_successors.any(|y| x == y));
+
+	if wrong_order {
 		Ordering::Less
 	} else {
 		Ordering::Equal
@@ -72,9 +79,10 @@ pub fn part2() -> usize {
 
 	let mut updates = updates;
 
-	updates
-		.iter_mut()
-		.for_each(|update| update.sort_by(|a, b| update_cmp(&rules, a, b)));
+	updates.iter_mut().for_each(|update| {
+		let cloned_update = update.clone();
+		update.sort_by(|current, _| update_cmp(&rules, &cloned_update, current))
+	});
 
 	updates
 		.iter()
