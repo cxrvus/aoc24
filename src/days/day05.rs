@@ -1,12 +1,93 @@
+type Rules = Vec<(u8, u8)>;
+type Update = Vec<u8>;
+type Updates = Vec<Update>;
+
+struct Sections {
+	rules: Rules,
+	updates: Updates,
+}
+
+impl Sections {
+	fn parse() -> Sections {
+		let parts = INPUT.trim().split("\n\n").collect::<Vec<_>>();
+		let (rules, updates) = (parts[0], parts[1]);
+
+		let rules: Rules = rules
+			.lines()
+			.map(|l| (l.get(0..2).unwrap(), l.get(3..5).unwrap()))
+			.map(|(before, after)| (before.parse().unwrap(), after.parse().unwrap()))
+			.collect();
+
+		let updates: Updates = updates
+			.lines()
+			.map(|l| l.split(',').map(|n| n.parse().unwrap()).collect())
+			.collect();
+
+		Sections { rules, updates }
+	}
+}
+
+fn get_middle_number(update: &Update) -> u8 {
+	update[update.len() / 2]
+}
+
+fn validate_update(update: &Update, rules: &Rules) -> bool {
+	for (before, after) in rules {
+		if let Some(before_pos) = update.iter().position(|page| page == before) {
+			if let Some(after_pos) = update.iter().position(|page| page == after) {
+				if before_pos > after_pos {
+					return false;
+				}
+			}
+		}
+	}
+	true
+}
+
 pub fn part1() -> usize {
-	todo!()
+	let Sections { rules, updates } = Sections::parse();
+
+	updates
+		.iter()
+		.filter(|update| validate_update(update, &rules))
+		.map(|update| get_middle_number(update) as usize)
+		.sum()
 }
 
 pub fn part2() -> usize {
 	todo!()
 }
 
-const XINPUT: &str = "";
+const XINPUT: &str = "
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+";
 
 const INPUT: &str = "
 73|89
