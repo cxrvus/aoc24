@@ -33,34 +33,35 @@ fn get_middle_number(update: &Update) -> u8 {
 	update[update.len() / 2]
 }
 
-fn validate_update(rules: &Rules, update: &Update) -> bool {
-	let page = update.last().unwrap();
-	validate_update_slice(rules, update, page)
-}
+fn fix_update(rules: &Rules, update: &mut Update) {
+	loop {
+		let mut unordered = false;
 
-fn validate_update_slice(rules: &Rules, update: &Update, page: &u8) -> bool {
-	let slice = update
-		.get(0..update.iter().position(|x| x == page).unwrap())
-		.unwrap();
+		for before_pos in 0..update.len() {
+			let page = update[before_pos];
+			let allowed_successors: Vec<_> = rules
+				.iter()
+				.filter(|(before, _)| *before == page)
+				.map(|(_, after)| after)
+				.collect();
 
-	for (before, after) in rules {
-		if let Some(before_pos) = slice.iter().position(|page| page == before) {
-			if let Some(after_pos) = slice.iter().position(|page| page == after) {
-				if before_pos > after_pos {
-					return false;
-				}
+			if let Some(i) = update
+				.get(before_pos + 1..)
+				.unwrap()
+				.iter()
+				.position(|x| allowed_successors.iter().any(|y| *x == **y))
+			{
+				unordered = true;
+				let i = i + before_pos + 1;
+				update.swap(before_pos, i);
 			}
 		}
+		if !unordered {
+			break;
+		}
 	}
-	true
-}
 
-fn cmp_update(rules: &Rules, update: &Update, page: &u8) -> Ordering {
-	if validate_update_slice(rules, update, page) {
-		Ordering::Equal
-	} else {
-		Ordering::Less
-	}
+	update.reverse();
 }
 
 pub fn part1() -> usize {
@@ -68,7 +69,7 @@ pub fn part1() -> usize {
 
 	updates
 		.iter()
-		.filter(|update| validate_update(&rules, update))
+		// .filter(|update| validate_update(&rules, update))
 		.map(|update| get_middle_number(update) as usize)
 		.sum()
 }
@@ -79,12 +80,9 @@ pub fn part2() -> usize {
 	let original_updates = updates.clone();
 	let mut updates = updates;
 
-	updates.iter_mut().for_each(|update| {
-		let original_update = update.clone();
-		update.sort_by(|page, _| cmp_update(&rules, &original_update, page));
-	});
-
-	// dbg!(&updates);
+	updates
+		.iter_mut()
+		.for_each(|update| fix_update(&rules, update));
 
 	updates
 		.iter()
@@ -94,7 +92,19 @@ pub fn part2() -> usize {
 		.sum()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
+
+const MIN_INPUT: &str = "
+01|02
+02|03
+
+01,03,02
+01,02,03
+02,01,03
+02,03,01
+03,01,02
+03,02,01
+";
 
 const TEST_INPUT: &str = "
 47|53
