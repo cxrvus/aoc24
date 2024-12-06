@@ -175,6 +175,10 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
+	let mut map = Map::from(INPUT);
+	let start = map.find_start();
+	map.set_at(&start, Tile::Empty);
+
 	todo!()
 }
 
