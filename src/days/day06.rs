@@ -200,15 +200,21 @@ pub fn part1() -> usize {
 
 pub fn part2() -> usize {
 	let original_map = Map::from(INPUT);
+	let mut wandered_map = original_map.clone();
+	let start_pos = original_map.find_start();
+	wandered_map.wander();
+	wandered_map.set_at(&start_pos, Tile::Start);
+
 	let mut loop_count = 0;
 
-	for obstacle_pos in original_map.find_all(&Tile::Empty) {
+	for obstacle_pos in wandered_map.find_all(&Tile::Visited) {
 		let mut map = original_map.clone();
 		map.set_at(&obstacle_pos, Tile::Obstacle);
 		let is_loop = map.wander();
 		if is_loop {
 			loop_count += 1
 		}
+
 		dbg!(obstacle_pos);
 		dbg!(loop_count);
 	}
