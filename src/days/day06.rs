@@ -214,9 +214,6 @@ pub fn part2() -> usize {
 		if is_loop {
 			loop_count += 1
 		}
-
-		dbg!(obstacle_pos);
-		dbg!(loop_count);
 	}
 
 	loop_count
