@@ -64,13 +64,13 @@ impl From<&Map> for String {
 
 impl Map {
 	fn is_in_range(&self, pos: &Vec2) -> bool {
-		let Vec2(x, y) = *pos;
+		let Vec2 { x, y } = *pos;
 		x >= 0 && y >= 0 && y < self.0.len() as i32 && x < self.0[0].len() as i32
 	}
 
 	fn at(&self, pos: &Vec2) -> Option<&Tile> {
 		if self.is_in_range(pos) {
-			let Vec2(x, y) = *pos;
+			let Vec2 { x, y } = *pos;
 			Some(&self.0[y as usize][x as usize])
 		} else {
 			None
@@ -79,7 +79,7 @@ impl Map {
 
 	fn set_at(&mut self, pos: &Vec2, tile: Tile) {
 		if self.is_in_range(pos) {
-			let Vec2(x, y) = *pos;
+			let Vec2 { x, y } = *pos;
 			self.0[y as usize][x as usize] = tile;
 		} else {
 			panic!("map index is out of range: {:?} = {:?}", pos, tile)
@@ -100,28 +100,38 @@ impl Map {
 				if *tile == Tile::Start {
 					return pos;
 				}
-				pos = pos + Vec2(1, 0)
+				pos = pos + Vec2 { x: 1, y: 0 }
 			}
-			pos.0 = 0;
-			pos = pos + Vec2(0, 1)
+			pos.x = 0;
+			pos = pos + Vec2 { x: 0, y: 1 }
 		}
 		panic!("map needs a Start tile");
 	}
 }
 
-// todo: convert to struct with X and Y
 #[derive(Debug, Default, Copy, Clone)]
-struct Vec2(i32, i32);
+struct Vec2 {
+	x: i32,
+	y: i32,
+}
 
 impl ops::Add<Vec2> for Vec2 {
 	type Output = Vec2;
 
 	fn add(self, other: Vec2) -> Self::Output {
-		Vec2(self.0 + other.0, self.1 + other.1)
+		Vec2 {
+			x: self.x + other.x,
+			y: self.y + other.y,
+		}
 	}
 }
 
-const DIRECTIONS: [Vec2; 4] = [Vec2(0, -1), Vec2(1, 0), Vec2(0, 1), Vec2(-1, 0)];
+const DIRECTIONS: [Vec2; 4] = [
+	Vec2 { x: 0, y: -1 },
+	Vec2 { x: 1, y: 0 },
+	Vec2 { x: 0, y: 1 },
+	Vec2 { x: -1, y: 0 },
+];
 
 pub fn part1() -> usize {
 	let mut map = Map::from(INPUT);
