@@ -84,16 +84,18 @@ impl Map {
 			self.set_at(&pos, Tile::Visited);
 			let dir = dirs[dir_i];
 
+			let transform = Transform { pos, dir };
+			if (visited.contains(&transform)) {
+				return true;
+			} else {
+				visited.push(transform);
+			}
+
 			let next_pos = pos + dir;
-			let next_pos2 = next_pos + dir;
 
 			// println!("{}\n", String::from(&*self));
 
-			if let Some(next_tile2) = self.at(&next_pos2) {
-				if *next_tile2 == Tile::Obstacle && *self.at(&next_pos).unwrap() == Tile::Visited {
-					return true;
-				}
-			} else if let Some(next_tile) = self.at(&next_pos) {
+			if let Some(next_tile) = self.at(&next_pos) {
 				if *next_tile == Tile::Obstacle {
 					dir_i += 1;
 					dir_i %= dir_l;
@@ -197,21 +199,17 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
-	let mut map = Map::from(INPUT);
-	let original_start = map.find_start();
-	map.set_at(&original_start, Tile::Empty);
-
-	let original_map = map;
+	let original_map = Map::from(INPUT);
 	let mut loop_count = 0;
 
-	for start_pos in original_map.find_all(&Tile::Empty) {
+	for obstacle_pos in original_map.find_all(&Tile::Empty) {
 		let mut map = original_map.clone();
-		map.set_at(&start_pos, Tile::Start);
+		map.set_at(&obstacle_pos, Tile::Obstacle);
 		let is_loop = map.wander();
 		if is_loop {
 			loop_count += 1
 		}
-		dbg!(start_pos);
+		dbg!(obstacle_pos);
 		dbg!(loop_count);
 	}
 
