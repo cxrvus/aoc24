@@ -62,22 +62,39 @@ impl From<&Map> for String {
 	}
 }
 
+#[derive(Debug, PartialEq)]
+struct Transform {
+	pos: Vec2,
+	dir: Vec2,
+}
+
 impl Map {
-	fn wander(&mut self) {
-		let mut pos = self.find_start();
-		self.set_at(&pos, Tile::Visited);
+	/// wanders through the map and returns whether or not there is a loop (true) or an escape (false)
+	fn wander(&mut self) -> bool {
+		let start_pos = self.find_start();
+		let mut pos = start_pos;
 
 		let dirs = DIRECTIONS;
 		let mut dir_i = 0;
 		let mut dir_l = DIRECTIONS.len();
 
+		let mut visited: Vec<Transform> = vec![];
+
 		loop {
 			self.set_at(&pos, Tile::Visited);
 
 			let dir = dirs[dir_i];
+
+			let transform = Transform { pos, dir };
+			if visited.contains(&transform) {
+				return true;
+			} else {
+				visited.push(transform);
+			}
+
 			let next_pos = pos + dir;
 
-			// println!("{}\n", String::from(&map));
+			// println!("{}\n", String::from(&*self));
 
 			if let Some(next_tile) = self.at(&next_pos) {
 				if *next_tile == Tile::Obstacle {
@@ -87,14 +104,22 @@ impl Map {
 					pos = next_pos;
 				}
 			} else {
-				break;
+				return false;
 			}
 		}
 	}
 
 	fn is_in_range(&self, pos: &Vec2) -> bool {
 		let Vec2 { x, y } = *pos;
-		x >= 0 && y >= 0 && y < self.0.len() as i32 && x < self.0[0].len() as i32
+		x >= 0 && y >= 0 && y < self.height() && x < self.width()
+	}
+
+	fn height(&self) -> i32 {
+		self.0.len() as i32
+	}
+
+	fn width(&self) -> i32 {
+		self.0[0].len() as i32
 	}
 
 	fn at(&self, pos: &Vec2) -> Option<&Tile> {
@@ -144,7 +169,7 @@ impl Map {
 	}
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 struct Vec2 {
 	x: i32,
 	y: i32,
@@ -176,10 +201,22 @@ pub fn part1() -> usize {
 
 pub fn part2() -> usize {
 	let mut map = Map::from(INPUT);
-	let start = map.find_start();
-	map.set_at(&start, Tile::Empty);
+	let original_start = map.find_start();
+	map.set_at(&original_start, Tile::Empty);
 
-	todo!()
+	let original_map = map;
+	let mut loop_count = 0;
+
+	for start_pos in original_map.find_all(&Tile::Empty) {
+		let mut map = original_map.clone();
+		map.set_at(&start_pos, Tile::Start);
+		let is_loop = map.wander();
+		if is_loop {
+			loop_count += 1
+		}
+	}
+
+	loop_count
 }
 
 const INPUT: &str = PROD_INPUT;
