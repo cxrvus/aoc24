@@ -31,6 +31,7 @@ impl From<Tile> for u8 {
 	}
 }
 
+// todo: convert to struct with 1D tile Vec and size Vec2
 #[derive(Clone, Debug)]
 struct Map(Vec<Vec<Tile>>);
 
@@ -108,6 +109,7 @@ impl Map {
 	}
 }
 
+// todo: convert to struct with X and Y
 #[derive(Debug, Default, Copy, Clone)]
 struct Vec2(i32, i32);
 
