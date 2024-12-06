@@ -86,26 +86,32 @@ impl Map {
 		}
 	}
 
-	fn count(&self, target: &Tile) -> usize {
-		self.0
-			.iter()
-			.map(|row| row.iter().filter(|tile| *tile == target).count())
-			.sum()
-	}
-
-	fn find_start(&self) -> Vec2 {
+	fn find_all(&self, target: &Tile) -> Vec<Vec2> {
 		let mut pos = Vec2::default();
+		let mut positions = vec![];
+
 		for row in &self.0 {
 			for tile in row {
-				if *tile == Tile::Start {
-					return pos;
+				if tile == target {
+					positions.push(pos);
 				}
 				pos = pos + Vec2 { x: 1, y: 0 }
 			}
 			pos.x = 0;
 			pos = pos + Vec2 { x: 0, y: 1 }
 		}
-		panic!("map needs a Start tile");
+		positions
+	}
+
+	fn count(&self, target: &Tile) -> usize {
+		self.find_all(target).len()
+	}
+
+	fn find_start(&self) -> Vec2 {
+		*self
+			.find_all(&Tile::Start)
+			.first()
+			.expect("map needs a Start tile")
 	}
 }
 
