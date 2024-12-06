@@ -63,6 +63,35 @@ impl From<&Map> for String {
 }
 
 impl Map {
+	fn wander(&mut self) {
+		let mut pos = self.find_start();
+		self.set_at(&pos, Tile::Visited);
+
+		let dirs = DIRECTIONS;
+		let mut dir_i = 0;
+		let mut dir_l = DIRECTIONS.len();
+
+		loop {
+			self.set_at(&pos, Tile::Visited);
+
+			let dir = dirs[dir_i];
+			let next_pos = pos + dir;
+
+			// println!("{}\n", String::from(&map));
+
+			if let Some(next_tile) = self.at(&next_pos) {
+				if *next_tile == Tile::Obstacle {
+					dir_i += 1;
+					dir_i %= dir_l;
+				} else {
+					pos = next_pos;
+				}
+			} else {
+				break;
+			}
+		}
+	}
+
 	fn is_in_range(&self, pos: &Vec2) -> bool {
 		let Vec2 { x, y } = *pos;
 		x >= 0 && y >= 0 && y < self.0.len() as i32 && x < self.0[0].len() as i32
@@ -141,33 +170,7 @@ const DIRECTIONS: [Vec2; 4] = [
 
 pub fn part1() -> usize {
 	let mut map = Map::from(INPUT);
-	let mut pos = map.find_start();
-	map.set_at(&pos, Tile::Visited);
-
-	let dirs = DIRECTIONS;
-	let mut dir_i = 0;
-	let mut dir_l = DIRECTIONS.len();
-
-	loop {
-		map.set_at(&pos, Tile::Visited);
-
-		let dir = dirs[dir_i];
-		let next_pos = pos + dir;
-
-		println!("{}\n", String::from(&map));
-
-		if let Some(next_tile) = map.at(&next_pos) {
-			if *next_tile == Tile::Obstacle {
-				dir_i += 1;
-				dir_i %= dir_l;
-			} else {
-				pos = next_pos;
-			}
-		} else {
-			break;
-		}
-	}
-
+	map.wander();
 	map.count(&Tile::Visited)
 }
 
