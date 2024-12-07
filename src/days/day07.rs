@@ -1,7 +1,55 @@
+type Number = u128;
+
+#[derive(Debug, Default, PartialEq)]
+enum Operation {
+	#[default]
+	Add,
+	Mul,
+	Cat,
+}
+
+impl Operation {
+	fn exec(&self, a: &Number, b: &Number) -> Number {
+		let (a, b) = (*a, *b);
+		match self {
+			Operation::Add => a + b,
+			Operation::Mul => a * b,
+			Operation::Cat => Self::concat(a, b),
+		}
+	}
+
+	fn next(&self) -> Option<Self> {
+		match self {
+			Operation::Add => Some(Operation::Mul),
+			Operation::Mul => Some(Operation::Cat),
+			Operation::Cat => None,
+		}
+	}
+
+	fn next_without_concat(&self) -> Option<Self> {
+		match self {
+			Operation::Add => Some(Operation::Mul),
+			Operation::Mul => None,
+			Operation::Cat => panic!(),
+		}
+	}
+
+	fn to_str(&self) -> &str {
+		match self {
+			Operation::Add => "+",
+			Operation::Mul => "*",
+			Operation::Cat => "|",
+		}
+	}
+
+	fn concat(a: Number, b: Number) -> Number {
+		todo!()
+	}
+}
+
 struct Calibration {
-	result: u128,
-	operants: Vec<u128>,
-	configurations: Vec<u32>,
+	result: Number,
+	operants: Vec<Number>,
 }
 
 impl Calibration {
@@ -13,73 +61,72 @@ impl Calibration {
 				let halves: Vec<&str> = line.splitn(2, ": ").collect();
 				let result = halves[0].parse().unwrap();
 				let operants = halves[1].split(" ").map(|x| x.parse().unwrap()).collect();
-				let configurations = Self::get_configurations(result, &operants);
 
-				Calibration {
-					result,
-					operants,
-					configurations,
-				}
+				Calibration { result, operants }
 			})
 			.collect()
 	}
 
-	fn get_configurations(result: u128, operants: &Vec<u128>) -> Vec<u32> {
-		let opt_count = operants.len();
-		let config_count = 1 << (opt_count - 1);
+	fn is_valid(&self, allow_concat: bool) -> bool {
+		let Calibration { result, operants } = self;
 
-		let mut configs = vec![];
+		let mut operants = operants.iter();
+		let mut acc = *operants.next().unwrap();
 
-		for config in 0..config_count {
-			let mut acc = operants[0];
-			let mut opstr = String::from("");
+		for operant in operants {
+			let mut op_str = String::from("");
 
-			for o in 1..opt_count {
-				let operation = (config >> (o - 1)) & 1;
-				let operant = operants[o];
+			let mut operation = Operation::default();
 
-				acc = match operation {
-					0 => acc + operant,
-					1 => acc * operant,
-					_ => panic!(),
-				};
+			let get_next_op = if allow_concat {
+				Operation::next
+			} else {
+				Operation::next_without_concat
+			};
 
-				opstr += match operation {
-					0 => "+",
-					1 => "*",
-					_ => panic!(),
-				};
+			loop {
+				op_str += operation.to_str();
+				dbg!(&op_str);
 
-				dbg!((config, o, &opstr, acc));
+				acc = operation.exec(&acc, operant);
 
-				if acc > result {
+				if acc > *result {
+					break;
+				} else if let Some(next_op) = get_next_op(&operation) {
+					operation = next_op;
+				} else {
 					break;
 				}
 			}
 
-			if acc == result {
-				configs.push(config);
+			if acc == *result {
+				return true;
 			}
 		}
 
-		configs
+		false
+	}
+
+	fn total(calibrations: &[Self], allow_concat: bool) -> Number {
+		calibrations
+			.iter()
+			.filter(|x| x.is_valid(allow_concat))
+			.map(|x| x.result)
+			.sum()
 	}
 }
 
-pub fn part1() -> u128 {
+pub fn part1() -> Number {
 	let calibrations = Calibration::parse(INPUT);
-	calibrations
-		.iter()
-		.filter(|x| !x.configurations.is_empty())
-		.map(|x| x.result)
-		.sum()
+	Calibration::total(&calibrations, false)
 }
 
-pub fn part2() -> usize {
-	todo!()
+pub fn part2() -> Number {
+	let calibrations = Calibration::parse(INPUT);
+	Calibration::total(&calibrations, true)
 }
 
-const INPUT: &str = PROD_INPUT;
+const INPUT: &str = MIN_INPUT;
 
 const MIN_INPUT: &str = "190: 10 19";
 
