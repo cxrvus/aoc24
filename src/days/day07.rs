@@ -42,8 +42,16 @@ impl Operation {
 		}
 	}
 
-	fn concat(a: Number, b: Number) -> Number {
-		todo!()
+	fn concat(left: Number, right: Number) -> Number {
+		let mut left = left;
+		let mut i = right;
+
+		while i > 0 {
+			left *= 10;
+			i /= 10;
+		}
+
+		left + right
 	}
 }
 
