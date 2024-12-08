@@ -1,83 +1,5 @@
 type Number = u128;
 
-struct NodeOptions {
-	expected: Number,
-	allow_concat: bool,
-}
-
-#[derive(Debug, Clone)]
-struct Node {
-	child: Option<Box<Node>>,
-	operant: Number,
-	expected: Number,
-	get_next_op: fn(&Operation) -> Option<Operation>,
-}
-
-impl Node {
-	fn new(options: &NodeOptions, operants: &[Number]) -> Self {
-		let NodeOptions {
-			allow_concat,
-			expected,
-		} = *options;
-
-		let get_next_op = if allow_concat {
-			Operation::next
-		} else {
-			Operation::next_without_concat
-		};
-
-		let base = Node {
-			child: None,
-			operant: 0,
-			expected,
-			get_next_op,
-		};
-
-		Self::new_recursive(&base, operants, 0)
-	}
-
-	fn new_recursive(base: &Node, operants: &[Number], index: usize) -> Node {
-		let child = operants
-			.get(index + 1)
-			.map(|operant| Box::new(Self::new_recursive(base, operants, index + 1)));
-
-		Node {
-			child,
-			operant: operants[index],
-			expected: base.expected,
-			get_next_op: base.get_next_op,
-		}
-	}
-
-	fn eval(&self, operation: &Operation, right_operant: Option<Number>) -> bool {
-		let get_next_op = self.get_next_op;
-
-		let result = right_operant
-			.map(|right_operant| operation.exec(&right_operant, &self.operant))
-			.unwrap_or(self.operant);
-
-		dbg!(right_operant);
-
-		if result > self.expected {
-			false
-		} else if let Some(ref child) = self.child {
-			if child.eval(operation, Some(result)) {
-				true
-			} else if let Some(next_op) = get_next_op(operation) {
-				child.eval(&next_op, Some(result))
-			} else {
-				false
-			}
-		} else if result == self.expected {
-			true
-		} else if let Some(next_op) = get_next_op(operation) {
-			self.eval(&next_op, Some(result))
-		} else {
-			false
-		}
-	}
-}
-
 #[derive(Debug, Default, PartialEq)]
 enum Operation {
 	#[default]
@@ -88,35 +10,43 @@ enum Operation {
 
 impl Operation {
 	fn exec(&self, a: &Number, b: &Number) -> Number {
+		use Operation::*;
+
 		let (a, b) = (*a, *b);
 		match self {
-			Operation::Add => a + b,
-			Operation::Mul => a * b,
-			Operation::Cat => Self::concat(a, b),
+			Add => a + b,
+			Mul => a * b,
+			Cat => Self::concat(a, b),
 		}
 	}
 
 	fn next(&self) -> Option<Self> {
+		use Operation::*;
+
 		match self {
-			Operation::Add => Some(Operation::Mul),
-			Operation::Mul => Some(Operation::Cat),
-			Operation::Cat => None,
+			Add => Some(Mul),
+			Mul => Some(Cat),
+			Cat => None,
 		}
 	}
 
 	fn next_without_concat(&self) -> Option<Self> {
+		use Operation::*;
+
 		match self {
-			Operation::Add => Some(Operation::Mul),
-			Operation::Mul => None,
-			Operation::Cat => panic!(),
+			Add => Some(Mul),
+			Mul => None,
+			Cat => panic!(),
 		}
 	}
 
 	fn to_str(&self) -> &str {
+		use Operation::*;
+
 		match self {
-			Operation::Add => "+",
-			Operation::Mul => "*",
-			Operation::Cat => "|",
+			Add => "+",
+			Mul => "*",
+			Cat => "|",
 		}
 	}
 
@@ -156,14 +86,47 @@ impl Calibration {
 	fn is_valid(&self, allow_concat: bool) -> bool {
 		let Calibration { result, operants } = self;
 
-		let options = NodeOptions {
-			expected: *result,
-			allow_concat,
+		let get_next_op = if allow_concat {
+			Operation::next
+		} else {
+			Operation::next_without_concat
 		};
 
-		let root = Node::new(&options, operants);
+		let base = (Operation::default(), operants[0]);
+		let mut stack: Vec<(Operation, Number)> = vec![base];
+		let mut failed = false;
 
-		root.eval(&Operation::default(), None)
+		while let Some((op, left)) = stack.pop() {
+			dbg!(&stack);
+
+			let right = operants[stack.len() - 1];
+			let value = op.exec(&left, &right);
+
+			// if failed {
+			// 	if let Some(next_op) = get_next_op(op) {
+			// 	} else {
+			// 		stack.pop();
+			// 	}
+			// }
+
+			// stack.push((op, value));
+
+			// todo: re-add value > result optimization
+
+			if operants.len() > stack.len() + 1 {
+				stack.push((op, value));
+				stack.push((Operation::default(), value));
+			} else if value == *result {
+				return true;
+			} else if let Some(op) = get_next_op(&op) {
+				stack.pop();
+				stack.push((op, left));
+			} else {
+				break;
+			}
+		}
+
+		false
 	}
 
 	fn total(calibrations: &[Self], allow_concat: bool) -> Number {
@@ -186,9 +149,9 @@ pub fn part2() -> Number {
 	Calibration::total(&calibrations, false)
 }
 
-const INPUT: &str = PROD_INPUT;
+const INPUT: &str = MIN_INPUT;
 
-const MIN_INPUT: &str = "3267: 81 40 27";
+const MIN_INPUT: &str = "190: 10 19";
 
 const TEST_INPUT: &str = "
 190: 10 19
