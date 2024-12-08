@@ -1,5 +1,83 @@
 type Number = u128;
 
+struct NodeOptions {
+	expected: Number,
+	allow_concat: bool,
+}
+
+#[derive(Debug, Clone)]
+struct Node {
+	child: Option<Box<Node>>,
+	operant: Number,
+	expected: Number,
+	get_next_op: fn(&Operation) -> Option<Operation>,
+}
+
+impl Node {
+	fn new(options: &NodeOptions, operants: &[Number]) -> Self {
+		let NodeOptions {
+			allow_concat,
+			expected,
+		} = *options;
+
+		let get_next_op = if allow_concat {
+			Operation::next
+		} else {
+			Operation::next_without_concat
+		};
+
+		let base = Node {
+			child: None,
+			operant: 0,
+			expected,
+			get_next_op,
+		};
+
+		Self::new_recursive(&base, operants, 0)
+	}
+
+	fn new_recursive(base: &Node, operants: &[Number], index: usize) -> Node {
+		let child = operants
+			.get(index + 1)
+			.map(|operant| Box::new(Self::new_recursive(base, operants, index + 1)));
+
+		Node {
+			child,
+			operant: operants[index],
+			expected: base.expected,
+			get_next_op: base.get_next_op,
+		}
+	}
+
+	fn eval(&self, operation: &Operation, right_operant: Option<Number>) -> bool {
+		let get_next_op = self.get_next_op;
+
+		let result = right_operant
+			.map(|right_operant| operation.exec(&right_operant, &self.operant))
+			.unwrap_or(self.operant);
+
+		dbg!(right_operant);
+
+		if result > self.expected {
+			false
+		} else if let Some(ref child) = self.child {
+			if child.eval(operation, Some(result)) {
+				true
+			} else if let Some(next_op) = get_next_op(operation) {
+				child.eval(&next_op, Some(result))
+			} else {
+				false
+			}
+		} else if result == self.expected {
+			true
+		} else if let Some(next_op) = get_next_op(operation) {
+			self.eval(&next_op, Some(result))
+		} else {
+			false
+		}
+	}
+}
+
 #[derive(Debug, Default, PartialEq)]
 enum Operation {
 	#[default]
@@ -78,41 +156,14 @@ impl Calibration {
 	fn is_valid(&self, allow_concat: bool) -> bool {
 		let Calibration { result, operants } = self;
 
-		let mut operants = operants.iter();
-		let mut acc = *operants.next().unwrap();
+		let options = NodeOptions {
+			expected: *result,
+			allow_concat,
+		};
 
-		for operant in operants {
-			let mut op_str = String::from("");
+		let root = Node::new(&options, operants);
 
-			let mut operation = Operation::default();
-
-			let get_next_op = if allow_concat {
-				Operation::next
-			} else {
-				Operation::next_without_concat
-			};
-
-			loop {
-				op_str += operation.to_str();
-				dbg!(&op_str);
-
-				acc = operation.exec(&acc, operant);
-
-				if acc > *result {
-					break;
-				} else if let Some(next_op) = get_next_op(&operation) {
-					operation = next_op;
-				} else {
-					break;
-				}
-			}
-
-			if acc == *result {
-				return true;
-			}
-		}
-
-		false
+		root.eval(&Operation::default(), None)
 	}
 
 	fn total(calibrations: &[Self], allow_concat: bool) -> Number {
@@ -131,12 +182,13 @@ pub fn part1() -> Number {
 
 pub fn part2() -> Number {
 	let calibrations = Calibration::parse(INPUT);
-	Calibration::total(&calibrations, true)
+	// todo: allow concat
+	Calibration::total(&calibrations, false)
 }
 
-const INPUT: &str = MIN_INPUT;
+const INPUT: &str = PROD_INPUT;
 
-const MIN_INPUT: &str = "190: 10 19";
+const MIN_INPUT: &str = "3267: 81 40 27";
 
 const TEST_INPUT: &str = "
 190: 10 19
