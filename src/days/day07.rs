@@ -1,4 +1,4 @@
-type Number = u128;
+type Number = u64;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 enum Operation {
@@ -85,7 +85,6 @@ impl Calibration {
 	}
 
 	fn is_valid(&self, allow_concat: bool) -> bool {
-		dbg!(&self);
 		let Calibration { result, operants } = self;
 
 		let get_next_op = if allow_concat {
@@ -109,16 +108,12 @@ impl Calibration {
 				stack.push((op.clone(), left));
 			}
 
-			// dbg!(&stack);
-
 			let right = operants[stack.len()];
 			let value = op.exec(&left, &right);
 
-			// dbg!(value);
-
-			// todo: re-add value > result optimization
-
-			if operants.len() > stack.len() + 1 {
+			if value > *result {
+				failed = true;
+			} else if operants.len() > stack.len() + 1 {
 				stack.push((Operation::default(), value));
 			} else if value == *result {
 				return true;
@@ -146,8 +141,7 @@ pub fn part1() -> Number {
 
 pub fn part2() -> Number {
 	let calibrations = Calibration::parse(INPUT);
-	// todo: allow concat
-	Calibration::total(&calibrations, false)
+	Calibration::total(&calibrations, true)
 }
 
 const INPUT: &str = PROD_INPUT;
