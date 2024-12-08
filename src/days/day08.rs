@@ -1,5 +1,76 @@
+use std::{collections::BTreeMap, default, ops};
+
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
+struct Vec2 {
+	x: i32,
+	y: i32,
+}
+
+impl ops::Add<Vec2> for Vec2 {
+	type Output = Vec2;
+
+	fn add(self, other: Vec2) -> Self::Output {
+		Vec2 {
+			x: self.x + other.x,
+			y: self.y + other.y,
+		}
+	}
+}
+
+#[derive(Debug, Default)]
+struct ClusterMap(BTreeMap<char, Vec<Vec2>>);
+
+#[derive(Debug, Default)]
+struct Cluster(Vec<Vec2>);
+impl Cluster {
+	fn get_antinodes(&self) -> Vec<Vec2> {
+		todo!()
+	}
+}
+
+#[derive(Debug)]
+struct Map {
+	height: usize,
+	width: usize,
+	clusters: ClusterMap,
+}
+
+impl Map {
+	fn from_string(input: &str) -> Self {
+		// let split = input.trim().split('\n');
+		let mut lines = input.trim().lines();
+		let height = lines.clone().count();
+		let width = lines.clone().next().unwrap().len();
+		let string = lines.collect::<Vec<&str>>().join("");
+
+		let mut clusters: ClusterMap = ClusterMap::default();
+
+		for (i, freq) in string.chars().enumerate() {
+			if freq != '.' {
+				let pos = Vec2 {
+					x: (i % width) as i32,
+					y: (i / width) as i32,
+				};
+
+				clusters.0.entry(freq).or_default().push(pos);
+			}
+		}
+
+		dbg!(Map {
+			height,
+			width,
+			clusters,
+		})
+	}
+
+	fn get_antinodes(&self) -> Vec<Vec2> {
+		todo!()
+	}
+}
+
 pub fn part1() -> usize {
-	todo!()
+	let map = Map::from_string(INPUT);
+	map.get_antinodes().len()
 }
 
 pub fn part2() -> usize {
