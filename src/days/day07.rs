@@ -1,6 +1,6 @@
 type Number = u128;
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 enum Operation {
 	#[default]
 	Add,
@@ -63,6 +63,7 @@ impl Operation {
 	}
 }
 
+#[derive(Debug)]
 struct Calibration {
 	result: Number,
 	operants: Vec<Number>,
@@ -84,6 +85,7 @@ impl Calibration {
 	}
 
 	fn is_valid(&self, allow_concat: bool) -> bool {
+		dbg!(&self);
 		let Calibration { result, operants } = self;
 
 		let get_next_op = if allow_concat {
@@ -97,32 +99,31 @@ impl Calibration {
 		let mut failed = false;
 
 		while let Some((op, left)) = stack.pop() {
-			dbg!(&stack);
+			if failed {
+				if let Some(next_op) = get_next_op(&op) {
+					stack.push((next_op, left));
+					failed = false;
+				}
+				continue;
+			} else {
+				stack.push((op.clone(), left));
+			}
 
-			let right = operants[stack.len() - 1];
+			// dbg!(&stack);
+
+			let right = operants[stack.len()];
 			let value = op.exec(&left, &right);
 
-			// if failed {
-			// 	if let Some(next_op) = get_next_op(op) {
-			// 	} else {
-			// 		stack.pop();
-			// 	}
-			// }
-
-			// stack.push((op, value));
+			// dbg!(value);
 
 			// todo: re-add value > result optimization
 
 			if operants.len() > stack.len() + 1 {
-				stack.push((op, value));
 				stack.push((Operation::default(), value));
 			} else if value == *result {
 				return true;
-			} else if let Some(op) = get_next_op(&op) {
-				stack.pop();
-				stack.push((op, left));
 			} else {
-				break;
+				failed = true;
 			}
 		}
 
@@ -149,9 +150,9 @@ pub fn part2() -> Number {
 	Calibration::total(&calibrations, false)
 }
 
-const INPUT: &str = MIN_INPUT;
+const INPUT: &str = PROD_INPUT;
 
-const MIN_INPUT: &str = "190: 10 19";
+const MIN_INPUT: &str = "83: 17 5";
 
 const TEST_INPUT: &str = "
 190: 10 19
