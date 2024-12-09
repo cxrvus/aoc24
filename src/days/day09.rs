@@ -65,7 +65,58 @@ impl From<DiskMap> for BasicDiskData {
 			data.pop();
 		}
 
-		BasicDiskData(data)
+		Self(data)
+	}
+}
+
+#[derive(Debug)]
+struct Block {
+	id: Option<usize>,
+	size: u8,
+}
+
+impl Block {
+	fn checksum(&self, start: usize) -> usize {
+		(start..(start + self.size as usize)).sum()
+	}
+
+	fn is_free(&self) -> bool {
+		self.id.is_none()
+	}
+}
+
+#[derive(Debug)]
+struct DiskData(Vec<Block>);
+
+impl From<DiskMap> for DiskData {
+	fn from(map: DiskMap) -> Self {
+		let mut blocks: Vec<Block> = vec![];
+		let mut free = false;
+		let mut i = 0;
+
+		for size in map.0 {
+			let id = if free { None } else { Some(i) };
+			let block = Block { size, id };
+			blocks.push(block);
+
+			if free {
+				i += 1;
+			}
+
+			free = !free;
+		}
+
+		if blocks.last().unwrap().is_free() {
+			blocks.pop();
+		}
+
+		Self(blocks)
+	}
+}
+
+impl DiskData {
+	fn checksum(&self) -> usize {
+		self.0.iter().enumerate().map(|(i, x)| x.checksum(i)).sum()
 	}
 }
 
@@ -90,10 +141,16 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
-	todo!()
+	let map = DiskMap::from(INPUT.to_owned());
+	let data = DiskData::from(map);
+
+	dbg!(&data);
+	// todo: defragment
+
+	data.checksum()
 }
 
-const INPUT: &str = PROD_INPUT;
+const INPUT: &str = TEST_INPUT;
 
 const TEST_INPUT: &str = "
 2333133121414131402
