@@ -118,6 +118,31 @@ impl DiskData {
 	fn checksum(&self) -> usize {
 		self.0.iter().enumerate().map(|(i, x)| x.checksum(i)).sum()
 	}
+
+	fn defragment(&mut self) {
+		let blocks = &mut self.0;
+
+		for i in (0..blocks.len()).rev() {
+			if !blocks[i].is_free() {
+				for j in 0..i {
+					if blocks[j].is_free() && blocks[j].size >= blocks[i].size {
+						let padding_size = blocks[j].size - blocks[i].size;
+						blocks.swap(i, j);
+
+						if padding_size > 0 {
+							let padding = Block {
+								size: padding_size,
+								id: None,
+							};
+							blocks.insert(j + 1, padding);
+						}
+
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 impl From<String> for DiskMap {
@@ -142,15 +167,20 @@ pub fn part1() -> usize {
 
 pub fn part2() -> usize {
 	let map = DiskMap::from(INPUT.to_owned());
-	let data = DiskData::from(map);
+	let mut data = DiskData::from(map);
 
 	dbg!(&data);
-	// todo: defragment
+	data.defragment();
+	dbg!(&data);
 
 	data.checksum()
 }
 
 const INPUT: &str = TEST_INPUT;
+
+const MIN_INPUT: &str = "
+321
+";
 
 const TEST_INPUT: &str = "
 2333133121414131402
