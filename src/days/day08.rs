@@ -17,14 +17,37 @@ impl ops::Add<Vec2> for Vec2 {
 	}
 }
 
+impl ops::Sub<Vec2> for Vec2 {
+	type Output = Vec2;
+
+	fn sub(self, other: Vec2) -> Self::Output {
+		Vec2 {
+			x: self.x - other.x,
+			y: self.y - other.y,
+		}
+	}
+}
+
 #[derive(Debug, Default)]
-struct ClusterMap(BTreeMap<char, Vec<Vec2>>);
+struct ClusterMap(BTreeMap<char, Cluster>);
 
 #[derive(Debug, Default)]
 struct Cluster(Vec<Vec2>);
 impl Cluster {
 	fn get_antinodes(&self) -> Vec<Vec2> {
-		todo!()
+		let antennas = &self.0;
+		let mut antinodes: Vec<Vec2> = vec![];
+
+		for antenna in antennas {
+			for other in antennas {
+				if antenna != other {
+					let antinode = *antenna + (*antenna - *other);
+					antinodes.push(antinode);
+				}
+			}
+		}
+
+		antinodes
 	}
 }
 
@@ -51,20 +74,36 @@ impl Map {
 					x: (i % width) as i32,
 					y: (i / width) as i32,
 				};
-
-				clusters.0.entry(freq).or_default().push(pos);
+				clusters.0.entry(freq).or_default().0.push(pos);
 			}
 		}
 
-		dbg!(Map {
+		Map {
 			height,
 			width,
 			clusters,
-		})
+		}
+	}
+
+	fn in_bounds(&self, pos: &Vec2) -> bool {
+		let Vec2 { x, y } = *pos;
+		x >= 0 && y >= 0 && y < self.height as i32 && x < self.width as i32
 	}
 
 	fn get_antinodes(&self) -> Vec<Vec2> {
-		todo!()
+		let clusters = &self.clusters.0;
+		let mut all_antinodes: Vec<Vec2> = vec![];
+
+		for (_, cluster) in clusters {
+			for antinode in cluster.get_antinodes() {
+				if self.in_bounds(&antinode) && !all_antinodes.iter().any(|x| *x == antinode) {
+					all_antinodes.push(antinode);
+				}
+			}
+		}
+
+		// all_antinodes
+		dbg!(all_antinodes)
 	}
 }
 
@@ -77,7 +116,14 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
+
+const MIN_INPUT: &str = "
+....
+.a..
+..a.
+....
+";
 
 const TEST_INPUT: &str = "
 ............
@@ -93,6 +139,19 @@ const TEST_INPUT: &str = "
 ............
 ............
 ";
+
+// ............
+// ........0...
+// .....0......
+// .......0....
+// ....0.......
+// ......A.....
+// ............
+// ............
+// ........A...
+// .........A..
+// ............
+// ............
 
 const PROD_INPUT: &str = "
 ...s..............................................
