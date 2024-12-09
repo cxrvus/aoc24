@@ -20,6 +20,16 @@ impl DiskData {
 			.collect::<Vec<_>>()
 			.join("")
 	}
+
+	fn defragment(&mut self) {
+		let empty_count = self.0.iter().filter(|x| x.is_none()).count();
+		let mut progress = 0;
+		todo!()
+	}
+
+	fn checksum(&self) -> u32 {
+		todo!()
+	}
 }
 
 impl From<DiskMap> for DiskData {
@@ -59,18 +69,23 @@ impl From<String> for DiskMap {
 	}
 }
 
-pub fn part1() -> usize {
+pub fn part1() -> u32 {
 	let map = DiskMap::from(INPUT.to_owned());
+	let mut data = DiskData::from(map);
 
-	dbg!(DiskData::from(map).as_string());
-	todo!()
+	dbg!(&data);
+
+	data.defragment();
+	dbg!(&data);
+
+	data.checksum()
 }
 
 pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
 
 const TEST_INPUT: &str = "
 2333133121414131402
