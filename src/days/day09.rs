@@ -22,27 +22,16 @@ impl DiskData {
 	}
 }
 
-impl DiskMap {
-	fn from_str(input: &str) -> Self {
-		Self(
-			input
-				.trim()
-				.to_owned()
-				.chars()
-				.map(|c| c.to_digit(10).unwrap() as u8)
-				.collect::<Vec<u8>>(),
-		)
-	}
-
-	fn expand(&self) -> DiskData {
+impl From<DiskMap> for DiskData {
+	fn from(map: DiskMap) -> Self {
 		let mut data: Vec<Option<u32>> = vec![];
 		let mut free = false;
 		let mut id = 0;
 
-		for byte in &self.0 {
+		for byte in map.0 {
 			let value = if free { None } else { Some(id) };
 
-			for i in 0..*byte {
+			for i in 0..byte {
 				data.push(value);
 			}
 
@@ -57,10 +46,23 @@ impl DiskMap {
 	}
 }
 
-pub fn part1() -> usize {
-	let map = DiskMap::from_str(INPUT);
+impl From<String> for DiskMap {
+	fn from(string: String) -> Self {
+		Self(
+			string
+				.trim()
+				.to_owned()
+				.chars()
+				.map(|c| c.to_digit(10).unwrap() as u8)
+				.collect::<Vec<u8>>(),
+		)
+	}
+}
 
-	dbg!(map.expand().as_string());
+pub fn part1() -> usize {
+	let map = DiskMap::from(INPUT.to_owned());
+
+	dbg!(DiskData::from(map).as_string());
 	todo!()
 }
 
