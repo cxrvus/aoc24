@@ -144,6 +144,7 @@ impl DiskData {
 			}
 		}
 	}
+					.unwrap_or(".".into())
 }
 
 impl From<String> for DiskMap {
