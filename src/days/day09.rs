@@ -69,7 +69,7 @@ impl From<DiskMap> for BasicDiskData {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Block {
 	id: Option<usize>,
 	size: u8,
@@ -117,34 +117,44 @@ impl From<DiskMap> for DiskData {
 
 impl DiskData {
 	fn checksum(&self) -> usize {
-		self.0.iter().enumerate().map(|(i, x)| x.checksum(i)).sum()
+		self.0
+			.iter()
+			.filter(|x| !x.is_free())
+			.enumerate()
+			.map(|(i, x)| x.checksum(i))
+			.sum()
 	}
 
 	fn defragment(&mut self) {
 		let blocks = &mut self.0;
 
-		for i in (0..blocks.len()).rev() {
-			if !blocks[i].is_free() {
-				for j in 0..i {
-					if blocks[j].is_free() && blocks[j].size >= blocks[i].size {
-						let padding_size = blocks[j].size - blocks[i].size;
-						blocks.swap(i, j);
-
-						if padding_size > 0 {
-							let padding = Block {
-								size: padding_size,
-								id: None,
-							};
-							blocks.insert(j + 1, padding);
-						}
-
+		for orig in (1..blocks.len()).rev() {
+			if !blocks[orig].is_free() {
+				for dest in 0..orig {
+					if blocks[dest].is_free() && blocks[dest].size >= blocks[orig].size {
+						// dbg!(blocks[orig]);
+						blocks[dest].size -= blocks[orig].size;
+						blocks.insert(dest, blocks[orig]);
+						blocks.remove(orig + 1);
 						break;
 					}
 				}
 			}
 		}
 	}
+
+	fn as_string(&self) -> String {
+		self.0
+			.iter()
+			.map(|block| {
+				block
+					.id
+					.map(|id| id.to_string())
 					.unwrap_or(".".into())
+					.repeat(block.size as usize)
+			})
+			.collect()
+	}
 }
 
 impl From<String> for DiskMap {
@@ -171,9 +181,13 @@ pub fn part2() -> usize {
 	let map = DiskMap::from(INPUT.to_owned());
 	let mut data = DiskData::from(map);
 
-	dbg!(&data);
+	// dbg!(&data);
+	dbg!(&data.as_string());
+
 	data.defragment();
-	dbg!(&data);
+
+	// dbg!(&data);
+	dbg!(&data.as_string());
 
 	data.checksum()
 }
@@ -181,7 +195,7 @@ pub fn part2() -> usize {
 const INPUT: &str = TEST_INPUT;
 
 const MIN_INPUT: &str = "
-321
+36377
 ";
 
 const TEST_INPUT: &str = "
