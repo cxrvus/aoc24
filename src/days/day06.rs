@@ -76,7 +76,7 @@ impl Map {
 
 		let dirs = DIRECTIONS;
 		let mut dir_i = 0;
-		let mut dir_l = DIRECTIONS.len();
+		let dir_l = DIRECTIONS.len();
 
 		let mut visited: Vec<Transform> = vec![];
 
@@ -85,7 +85,7 @@ impl Map {
 			let dir = dirs[dir_i];
 
 			let transform = Transform { pos, dir };
-			if (visited.contains(&transform)) {
+			if visited.contains(&transform) {
 				return true;
 			} else {
 				visited.push(transform);

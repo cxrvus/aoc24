@@ -60,7 +60,7 @@ struct Map {
 impl Map {
 	fn from_string(input: &str) -> Self {
 		// let split = input.trim().split('\n');
-		let mut lines = input.trim().lines();
+		let lines = input.trim().lines();
 		let height = lines.clone().count();
 		let width = lines.clone().next().unwrap().len();
 		let string = lines.collect::<Vec<&str>>().join("");

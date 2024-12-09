@@ -1,5 +1,3 @@
-use std::cmp::{self, Ordering};
-
 type Rules = Vec<(u8, u8)>;
 type Update = Vec<u8>;
 type Updates = Vec<Update>;
@@ -100,7 +98,7 @@ pub fn part2() -> usize {
 	updates
 		.iter()
 		.enumerate()
-		.filter(|(i, update)| original_updates[*i] != updates[*i])
+		.filter(|(i, _)| original_updates[*i] != updates[*i])
 		.map(|(_, update)| get_middle_number(update) as usize)
 		.sum()
 }
