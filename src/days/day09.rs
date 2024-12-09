@@ -77,7 +77,8 @@ struct Block {
 
 impl Block {
 	fn checksum(&self, start: usize) -> usize {
-		(start..(start + self.size as usize)).sum()
+		let size = self.size as usize;
+		(start..(start + size)).sum::<usize>() * self.id.unwrap_or_default()
 	}
 
 	fn is_free(&self) -> bool {
