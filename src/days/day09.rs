@@ -1,12 +1,10 @@
-use std::fmt::Display;
-
 #[derive(Debug)]
 struct DiskMap(Vec<u8>);
 
 #[derive(Debug)]
-struct DiskData(Vec<Option<u32>>);
+struct BasicDiskData(Vec<Option<usize>>);
 
-impl DiskData {
+impl BasicDiskData {
 	fn as_string(&self) -> String {
 		self.0
 			.iter()
@@ -21,27 +19,38 @@ impl DiskData {
 			.join("")
 	}
 
-	fn defragment(&mut self) {
-		let empty_count = self.0.iter().filter(|x| x.is_none()).count();
-		let mut progress = 0;
-		todo!()
-	}
+	fn checksum(&self) -> usize {
+		let mut i = 0;
+		let mut checksum = 0;
+		let mut values = self.0.clone();
 
-	fn checksum(&self) -> u32 {
-		todo!()
+		while let Some(value) = values.get(i) {
+			if let Some(value) = value {
+				checksum += *value * i;
+			} else {
+				while values.last().unwrap().is_none() {
+					values.pop();
+				}
+				checksum += values.pop().unwrap().unwrap() * i;
+			}
+
+			i += 1;
+		}
+
+		checksum
 	}
 }
 
-impl From<DiskMap> for DiskData {
+impl From<DiskMap> for BasicDiskData {
 	fn from(map: DiskMap) -> Self {
-		let mut data: Vec<Option<u32>> = vec![];
+		let mut data: Vec<Option<usize>> = vec![];
 		let mut free = false;
 		let mut id = 0;
 
 		for byte in map.0 {
 			let value = if free { None } else { Some(id) };
 
-			for i in 0..byte {
+			for _ in 0..byte {
 				data.push(value);
 			}
 
@@ -52,7 +61,11 @@ impl From<DiskMap> for DiskData {
 			free = !free;
 		}
 
-		DiskData(data)
+		while data.last().unwrap().is_none() {
+			data.pop();
+		}
+
+		BasicDiskData(data)
 	}
 }
 
@@ -69,14 +82,9 @@ impl From<String> for DiskMap {
 	}
 }
 
-pub fn part1() -> u32 {
+pub fn part1() -> usize {
 	let map = DiskMap::from(INPUT.to_owned());
-	let mut data = DiskData::from(map);
-
-	dbg!(&data);
-
-	data.defragment();
-	dbg!(&data);
+	let data = BasicDiskData::from(map);
 
 	data.checksum()
 }
