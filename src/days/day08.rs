@@ -1,29 +1,45 @@
-use std::{collections::BTreeMap, default, ops};
+use std::collections::BTreeMap;
+use vec2::*;
 
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
-struct Vec2 {
-	x: i32,
-	y: i32,
-}
+pub mod vec2 {
+	use std::ops;
 
-impl ops::Add<Vec2> for Vec2 {
-	type Output = Vec2;
+	#[derive(Debug, Default, Copy, Clone, PartialEq)]
+	pub struct Vec2 {
+		pub x: i32,
+		pub y: i32,
+	}
 
-	fn add(self, other: Vec2) -> Self::Output {
-		Vec2 {
-			x: self.x + other.x,
-			y: self.y + other.y,
+	impl ops::Add<Vec2> for Vec2 {
+		type Output = Self;
+
+		fn add(self, other: Vec2) -> Self::Output {
+			Self {
+				x: self.x + other.x,
+				y: self.y + other.y,
+			}
 		}
 	}
-}
 
-impl ops::Sub<Vec2> for Vec2 {
-	type Output = Vec2;
+	impl ops::Sub<Vec2> for Vec2 {
+		type Output = Self;
 
-	fn sub(self, other: Vec2) -> Self::Output {
-		Vec2 {
-			x: self.x - other.x,
-			y: self.y - other.y,
+		fn sub(self, other: Vec2) -> Self::Output {
+			Self {
+				x: self.x - other.x,
+				y: self.y - other.y,
+			}
+		}
+	}
+
+	impl ops::Mul<i32> for Vec2 {
+		type Output = Self;
+
+		fn mul(self, scalar: i32) -> Self::Output {
+			Self {
+				x: self.x * scalar,
+				y: self.y * scalar,
+			}
 		}
 	}
 }
@@ -33,23 +49,6 @@ struct ClusterMap(BTreeMap<char, Cluster>);
 
 #[derive(Debug, Default)]
 struct Cluster(Vec<Vec2>);
-impl Cluster {
-	fn get_antinodes(&self) -> Vec<Vec2> {
-		let antennas = &self.0;
-		let mut antinodes: Vec<Vec2> = vec![];
-
-		for antenna in antennas {
-			for other in antennas {
-				if antenna != other {
-					let antinode = *antenna + (*antenna - *other);
-					antinodes.push(antinode);
-				}
-			}
-		}
-
-		antinodes
-	}
-}
 
 #[derive(Debug)]
 struct Map {
@@ -92,28 +91,44 @@ impl Map {
 
 	fn get_antinodes(&self) -> Vec<Vec2> {
 		let clusters = &self.clusters.0;
-		let mut all_antinodes: Vec<Vec2> = vec![];
+		let mut antinodes: Vec<Vec2> = vec![];
 
-		for (_, cluster) in clusters {
-			for antinode in cluster.get_antinodes() {
-				if self.in_bounds(&antinode) && !all_antinodes.iter().any(|x| *x == antinode) {
-					all_antinodes.push(antinode);
+		for cluster in clusters.values() {
+			let antennas = &cluster.0;
+			for antenna in antennas {
+				for other in antennas {
+					if antenna != other {
+						let mut i = 0;
+						loop {
+							let dir = (*antenna - *other) * i;
+							let antinode = *antenna + dir;
+							dbg!(&antinode, dir, i);
+
+							if !self.in_bounds(&antinode) {
+								break;
+							} else if !antinodes.iter().any(|x| *x == antinode) {
+								antinodes.push(antinode);
+							}
+
+							i += 1;
+						}
+					}
 				}
 			}
 		}
 
 		// all_antinodes
-		dbg!(all_antinodes)
+		dbg!(antinodes)
 	}
 }
 
 pub fn part1() -> usize {
-	let map = Map::from_string(INPUT);
-	map.get_antinodes().len()
+	unimplemented!()
 }
 
 pub fn part2() -> usize {
-	todo!()
+	let map = Map::from_string(INPUT);
+	map.get_antinodes().len()
 }
 
 const INPUT: &str = PROD_INPUT;
