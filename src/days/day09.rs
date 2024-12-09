@@ -1,14 +1,66 @@
-fn parse_input() -> Vec<u8> {
-	INPUT
-		.trim()
-		.to_owned()
-		.chars()
-		.map(|c| c.to_digit(10).unwrap() as u8)
-		.collect::<Vec<u8>>()
+use std::fmt::Display;
+
+#[derive(Debug)]
+struct DiskMap(Vec<u8>);
+
+#[derive(Debug)]
+struct DiskData(Vec<Option<u32>>);
+
+impl DiskData {
+	fn as_string(&self) -> String {
+		self.0
+			.iter()
+			.map(|x| {
+				if let Some(x) = x {
+					x.to_string()
+				} else {
+					".".into()
+				}
+			})
+			.collect::<Vec<_>>()
+			.join("")
+	}
+}
+
+impl DiskMap {
+	fn from_str(input: &str) -> Self {
+		Self(
+			input
+				.trim()
+				.to_owned()
+				.chars()
+				.map(|c| c.to_digit(10).unwrap() as u8)
+				.collect::<Vec<u8>>(),
+		)
+	}
+
+	fn expand(&self) -> DiskData {
+		let mut data: Vec<Option<u32>> = vec![];
+		let mut free = false;
+		let mut id = 0;
+
+		for byte in &self.0 {
+			let value = if free { None } else { Some(id) };
+
+			for i in 0..*byte {
+				data.push(value);
+			}
+
+			if free {
+				id += 1;
+			}
+
+			free = !free;
+		}
+
+		DiskData(data)
+	}
 }
 
 pub fn part1() -> usize {
-	dbg!(parse_input());
+	let map = DiskMap::from_str(INPUT);
+
+	dbg!(map.expand().as_string());
 	todo!()
 }
 
