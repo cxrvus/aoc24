@@ -84,18 +84,52 @@ fn directions() -> [Vec2; 4] {
 	]
 }
 
+fn get_destinations(map: &Map<u8>, trail_head: &Vec2u, distinct: bool) -> Vec<Vec2u> {
+	let directions = directions();
+	let mut positions = vec![*trail_head];
+	let mut destinations = vec![];
+
+	while let Some(pos) = positions.pop() {
+		let pos = pos.sign();
+		let value = *map.at(&pos).unwrap();
+
+		for dir in directions {
+			let next_pos = pos + dir;
+			if let Some(next_value) = map.at(&next_pos) {
+				if *next_value == value + 1 {
+					if *next_value == 9 {
+						let next_pos = next_pos.unsign().unwrap();
+						if !distinct || !destinations.contains(&next_pos) {
+							destinations.push(next_pos);
+						}
+					} else {
+						positions.push(next_pos.unsign().unwrap());
+					}
+				}
+			}
+		}
+	}
+
+	destinations
+}
+
 pub fn part1() -> usize {
 	let map = Map::from(INPUT);
-	let trail_heads = map.find_all(0);
-
-	todo!()
+	map.find_all(0)
+		.iter()
+		.map(|trail_head| get_destinations(&map, trail_head, true).len())
+		.sum()
 }
 
 pub fn part2() -> usize {
-	todo!()
+	let map = Map::from(INPUT);
+	map.find_all(0)
+		.iter()
+		.map(|trail_head| get_destinations(&map, trail_head, false).len())
+		.sum()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
 
 const TEST_INPUT: &str = "
 89010123
