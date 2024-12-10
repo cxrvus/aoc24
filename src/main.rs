@@ -4,6 +4,6 @@ mod days;
 use days::*;
 
 fn main() {
-	let result = day09::part2();
+	let result = day10::part1();
 	println!("{result}");
 }
