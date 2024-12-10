@@ -25,6 +25,10 @@ pub mod vec2 {
 				None
 			}
 		}
+
+		pub const X: Self = Self { x: 1, y: 0 };
+		pub const Y: Self = Self { x: 0, y: 1 };
+		pub const ZERO: Self = Self { x: 0, y: 0 };
 	}
 
 	impl Vec2u {
@@ -66,6 +70,17 @@ pub mod vec2 {
 			Self {
 				x: self.x * scalar,
 				y: self.y * scalar,
+			}
+		}
+	}
+
+	impl ops::Neg for Vec2 {
+		type Output = Self;
+
+		fn neg(self) -> Self::Output {
+			Self {
+				x: -self.x,
+				y: -self.y,
 			}
 		}
 	}

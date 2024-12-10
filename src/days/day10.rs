@@ -22,12 +22,7 @@ impl From<&str> for Map<u8> {
 }
 
 fn directions() -> [Vec2; 4] {
-	[
-		Vec2 { x: 1, y: 0 },
-		Vec2 { x: 0, y: 1 },
-		Vec2 { x: 0, y: -1 },
-		Vec2 { x: -1, y: 0 },
-	]
+	[Vec2::X, Vec2::Y, -Vec2::X, -Vec2::Y]
 }
 
 fn get_destinations(map: &Map<u8>, trail_head: &Vec2u, distinct: bool) -> Vec<Vec2u> {
