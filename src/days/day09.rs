@@ -124,18 +124,21 @@ impl DiskData {
 
 	fn defragment(&mut self) {
 		let blocks = &mut self.0;
+		let mut moved_blocks = 0;
 
 		for orig in (1..blocks.len()).rev() {
+			// dbg!(&Self(blocks.clone()).as_string());
+			let orig = orig + moved_blocks;
 			for dest in 0..orig {
 				if blocks[dest].free >= blocks[orig].size {
-					// dbg!(blocks[orig], blocks[dest]);
-
 					blocks[orig - 1].free += blocks[orig].free + blocks[orig].size;
 					blocks[orig].free = blocks[dest].free - blocks[orig].size;
 					blocks[dest].free = 0;
 
 					let orig_block = blocks.remove(orig);
 					blocks.insert(dest + 1, orig_block);
+
+					moved_blocks += 1;
 
 					break;
 				}
@@ -177,21 +180,19 @@ pub fn part2() -> usize {
 	let map = DiskMap::from(INPUT.to_owned());
 	let mut data = DiskData::from(map);
 
-	// dbg!(&data);
 	dbg!(&data.as_string());
 
 	data.defragment();
 
-	// dbg!(&data);
 	dbg!(&data.as_string());
 
 	data.checksum()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = PROD_INPUT;
 
 const MIN_INPUT: &str = "
-36377
+14113
 ";
 
 const TEST_INPUT: &str = "
