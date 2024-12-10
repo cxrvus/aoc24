@@ -1,4 +1,4 @@
-use super::util::{map::*, vec2::*};
+use crate::util::{map::*, vec2::*};
 
 impl From<&str> for Map<u8> {
 	fn from(value: &str) -> Self {

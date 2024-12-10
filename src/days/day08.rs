@@ -1,4 +1,4 @@
-use super::util::vec2::*;
+use crate::util::vec2::*;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Default)]

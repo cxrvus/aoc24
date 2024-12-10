@@ -1,5 +1,8 @@
 #![allow(dead_code)]
 
+pub mod template;
+pub mod util;
+
 mod days;
 use days::*;
 
