@@ -10,6 +10,36 @@ pub mod vec2 {
 		pub y: i32,
 	}
 
+	#[derive(Debug, Default, Copy, Clone, PartialEq)]
+	pub struct Vec2u {
+		pub x: usize,
+		pub y: usize,
+	}
+
+	impl Vec2 {
+		pub fn unsign(self) -> Option<Vec2u> {
+			let Self { x, y } = self;
+			if x >= 0 && y >= 0 {
+				Some(Vec2u {
+					x: x as usize,
+					y: y as usize,
+				})
+			} else {
+				None
+			}
+		}
+	}
+
+	impl Vec2u {
+		pub fn sign(self) -> Vec2 {
+			let Self { x, y } = self;
+			Vec2 {
+				x: x as i32,
+				y: y as i32,
+			}
+		}
+	}
+
 	impl ops::Add<Vec2> for Vec2 {
 		type Output = Self;
 
