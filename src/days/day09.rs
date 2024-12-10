@@ -1,5 +1,5 @@
 #[derive(Debug)]
-struct DiskMap(Vec<u8>);
+struct DiskMap(Vec<usize>);
 
 #[derive(Debug)]
 struct BasicDiskData(Vec<Option<usize>>);
@@ -71,19 +71,9 @@ impl From<DiskMap> for BasicDiskData {
 
 #[derive(Debug, Clone, Copy)]
 struct Block {
-	id: Option<usize>,
-	size: u8,
-}
-
-impl Block {
-	fn checksum(&self, start: usize) -> usize {
-		let size = self.size as usize;
-		(start..(start + size)).sum::<usize>() * self.id.unwrap_or_default()
-	}
-
-	fn is_free(&self) -> bool {
-		self.id.is_none()
-	}
+	id: usize,
+	size: usize,
+	free: usize,
 }
 
 #[derive(Debug)]
@@ -92,23 +82,27 @@ struct DiskData(Vec<Block>);
 impl From<DiskMap> for DiskData {
 	fn from(map: DiskMap) -> Self {
 		let mut blocks: Vec<Block> = vec![];
-		let mut free = false;
-		let mut i = 0;
+		let mut free_state = false;
+		let mut size = 0;
+		let mut id = 0;
 
-		for size in map.0 {
-			let id = if free { None } else { Some(i) };
-			let block = Block { size, id };
-			blocks.push(block);
-
-			if free {
-				i += 1;
+		for value in map.0 {
+			if !free_state {
+				size = value
+			} else {
+				blocks.push(Block {
+					id,
+					size,
+					free: value,
+				});
+				id += 1;
 			}
 
-			free = !free;
+			free_state = !free_state;
 		}
 
-		if blocks.last().unwrap().is_free() {
-			blocks.pop();
+		if free_state {
+			blocks.push(Block { id, size, free: 0 });
 		}
 
 		Self(blocks)
@@ -117,27 +111,33 @@ impl From<DiskMap> for DiskData {
 
 impl DiskData {
 	fn checksum(&self) -> usize {
-		self.0
-			.iter()
-			.filter(|x| !x.is_free())
-			.enumerate()
-			.map(|(i, x)| x.checksum(i))
-			.sum()
+		let mut sum = 0;
+		let mut pos = 0;
+
+		for block in &self.0 {
+			sum += (pos..(pos + block.size)).sum::<usize>() * block.id;
+			pos += block.size + block.free;
+		}
+
+		sum
 	}
 
 	fn defragment(&mut self) {
 		let blocks = &mut self.0;
 
 		for orig in (1..blocks.len()).rev() {
-			if !blocks[orig].is_free() {
-				for dest in 0..orig {
-					if blocks[dest].is_free() && blocks[dest].size >= blocks[orig].size {
-						// dbg!(blocks[orig]);
-						blocks[dest].size -= blocks[orig].size;
-						blocks.insert(dest, blocks[orig]);
-						blocks.remove(orig + 1);
-						break;
-					}
+			for dest in 0..orig {
+				if blocks[dest].free >= blocks[orig].size {
+					// dbg!(blocks[orig], blocks[dest]);
+
+					blocks[orig - 1].free += blocks[orig].free + blocks[orig].size;
+					blocks[orig].free = blocks[dest].free - blocks[orig].size;
+					blocks[dest].free = 0;
+
+					let orig_block = blocks.remove(orig);
+					blocks.insert(dest + 1, orig_block);
+
+					break;
 				}
 			}
 		}
@@ -147,11 +147,7 @@ impl DiskData {
 		self.0
 			.iter()
 			.map(|block| {
-				block
-					.id
-					.map(|id| id.to_string())
-					.unwrap_or(".".into())
-					.repeat(block.size as usize)
+				block.id.to_string().repeat(block.size) + &".".to_string().repeat(block.free)
 			})
 			.collect()
 	}
@@ -164,8 +160,8 @@ impl From<String> for DiskMap {
 				.trim()
 				.to_owned()
 				.chars()
-				.map(|c| c.to_digit(10).unwrap() as u8)
-				.collect::<Vec<u8>>(),
+				.map(|c| c.to_digit(10).unwrap() as usize)
+				.collect::<Vec<_>>(),
 		)
 	}
 }
