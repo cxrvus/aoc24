@@ -2,10 +2,11 @@ use super::util::{map::*, vec2::*};
 
 impl From<&str> for Map<u8> {
 	fn from(value: &str) -> Self {
-		let lines = value.trim().lines();
-		let height = lines.clone().count();
-		let width = lines.clone().next().unwrap().len();
-		let string = lines.collect::<Vec<&str>>().join("");
+		let ProxyMap {
+			width,
+			height,
+			string,
+		} = ProxyMap::from(value);
 
 		let values = string
 			.chars()

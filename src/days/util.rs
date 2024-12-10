@@ -123,4 +123,23 @@ pub mod map {
 			})
 		}
 	}
+
+	#[derive(Debug)]
+	pub struct ProxyMap {
+		pub width: usize,
+		pub height: usize,
+		pub string: String,
+	}
+
+	impl From<&str> for ProxyMap {
+		fn from(value: &str) -> Self {
+			let lines = value.trim().lines();
+
+			Self {
+				height: lines.clone().count(),
+				width: lines.clone().next().unwrap().len(),
+				string: lines.collect::<Vec<&str>>().join(""),
+			}
+		}
+	}
 }
