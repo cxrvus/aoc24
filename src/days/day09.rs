@@ -74,6 +74,7 @@ struct Block {
 	id: usize,
 	size: usize,
 	free: usize,
+	moved: bool,
 }
 
 #[derive(Debug)]
@@ -94,6 +95,7 @@ impl From<DiskMap> for DiskData {
 					id,
 					size,
 					free: value,
+					moved: false,
 				});
 				id += 1;
 			}
@@ -102,7 +104,12 @@ impl From<DiskMap> for DiskData {
 		}
 
 		if free_state {
-			blocks.push(Block { id, size, free: 0 });
+			blocks.push(Block {
+				id,
+				size,
+				free: 0,
+				moved: false,
+			});
 		}
 
 		Self(blocks)
@@ -127,11 +134,12 @@ impl DiskData {
 
 		for orig in (1..blocks.len()).rev() {
 			for dest in 0..orig {
-				if blocks[dest].free >= blocks[orig].size {
+				if !blocks[dest].moved && blocks[dest].free >= blocks[orig].size {
 					// dbg!(blocks[orig], blocks[dest]);
 
 					blocks[orig - 1].free += blocks[orig].free + blocks[orig].size;
 					blocks[orig].free = blocks[dest].free - blocks[orig].size;
+					blocks[orig].moved = true;
 					blocks[dest].free = 0;
 
 					let orig_block = blocks.remove(orig);
