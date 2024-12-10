@@ -180,11 +180,7 @@ pub fn part2() -> usize {
 	let map = DiskMap::from(INPUT.to_owned());
 	let mut data = DiskData::from(map);
 
-	dbg!(&data.as_string());
-
 	data.defragment();
-
-	dbg!(&data.as_string());
 
 	data.checksum()
 }
