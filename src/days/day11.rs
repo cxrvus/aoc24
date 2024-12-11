@@ -1,6 +1,6 @@
-struct Stones(Vec<u64>);
+struct FlatStones(Vec<u64>);
 
-impl From<&str> for Stones {
+impl From<&str> for FlatStones {
 	fn from(value: &str) -> Self {
 		Self(
 			value
@@ -12,7 +12,7 @@ impl From<&str> for Stones {
 	}
 }
 
-impl Stones {
+impl FlatStones {
 	fn blink(&mut self, n: u64) {
 		let stones = &mut self.0;
 		for blink in 0..n {
@@ -59,13 +59,35 @@ impl Stones {
 	}
 }
 
+#[derive(Debug, Default)]
+struct Stone {
+	blinks: u32,
+	left: u64,
+	right: Option<Box<Self>>,
+}
+
+impl Stone {
+	fn vec(stones: FlatStones) -> Vec<Self> {
+		stones
+			.0
+			.iter()
+			.map(|&left| Self {
+				left,
+				..Self::default()
+			})
+			.collect()
+	}
+}
+
 pub fn part1() -> usize {
-	let mut stones = Stones::from(INPUT);
+	let mut stones = FlatStones::from(INPUT);
 	stones.blink(75);
 	stones.0.len()
 }
 
 pub fn part2() -> usize {
+	let stones = FlatStones::from(INPUT);
+	let stones = Stone::vec(stones);
 	todo!()
 }
 
