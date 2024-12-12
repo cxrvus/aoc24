@@ -1,3 +1,6 @@
+pub use map::*;
+pub use vec2::*;
+
 pub mod vec2 {
 	use std::ops;
 
