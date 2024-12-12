@@ -1,6 +1,8 @@
-struct FlatStones(Vec<u64>);
+use std::collections::BTreeMap;
 
-impl From<&str> for FlatStones {
+struct Stones(Vec<u64>);
+
+impl From<&str> for Stones {
 	fn from(value: &str) -> Self {
 		Self(
 			value
@@ -12,25 +14,43 @@ impl From<&str> for FlatStones {
 	}
 }
 
-impl FlatStones {
-	fn blink(&mut self, n: u32) {
-		let stones = &mut self.0;
-		for blink in 0..n {
-			let mut insertions = 0;
-			for i in 0..stones.len() {
-				let i = i + insertions;
-				if stones[i] == 0 {
-					stones[i] = 1;
-				} else if let Some((left, right)) = Self::split(stones[i]) {
-					stones[i] = right;
-					stones.insert(i, left);
-					insertions += 1;
+type CountMap = BTreeMap<u64, usize>;
+
+fn incr_count(count_map: &mut CountMap, count: usize) -> impl FnMut(u64) + '_ {
+	move |stone: u64| {
+		*count_map.entry(stone).or_insert(0) += count;
+	}
+}
+
+impl Stones {
+	fn blink(&self, blinks: u32) -> usize {
+		let stones = &self.0;
+		let mut count_map: CountMap = BTreeMap::new();
+
+		for stone in stones {
+			*count_map.entry(*stone).or_insert(0) += 1;
+		}
+
+		for _ in 0..blinks {
+			let mut new_count_map = BTreeMap::new();
+
+			for (&stone, &count) in &count_map {
+				let mut incr = incr_count(&mut new_count_map, count);
+
+				if stone == 0 {
+					incr(1);
+				} else if let Some((left, right)) = Self::split(stone) {
+					incr(left);
+					incr(right);
 				} else {
-					stones[i] *= 2024
+					incr(stone * 2024);
 				}
 			}
-			dbg!(&stones.len(), blink);
+
+			count_map = new_count_map;
 		}
+
+		count_map.values().sum()
 	}
 
 	fn split(stone: u64) -> Option<(u64, u64)> {
@@ -49,36 +69,12 @@ impl FlatStones {
 	}
 }
 
-#[derive(Debug, Default)]
-struct Stone {
-	blinks: u32,
-	left: u64,
-	right: Option<Box<Self>>,
-}
-
-impl Stone {
-	fn vec(stones: FlatStones) -> Vec<Self> {
-		stones
-			.0
-			.iter()
-			.map(|&left| Self {
-				left,
-				..Self::default()
-			})
-			.collect()
-	}
-}
-
 pub fn part1() -> usize {
-	let mut stones = FlatStones::from(INPUT);
-	stones.blink(25);
-	stones.0.len()
+	Stones::from(INPUT).blink(25)
 }
 
 pub fn part2() -> usize {
-	let mut stones = FlatStones::from(INPUT);
-	stones.blink(75);
-	stones.0.len()
+	Stones::from(INPUT).blink(75)
 }
 
 const INPUT: &str = PROD_INPUT;
