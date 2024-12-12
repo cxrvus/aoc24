@@ -1,12 +1,72 @@
+use crate::util::*;
+use std::collections::BTreeMap;
+
+// type RegionMap = BTreeMap<u8, Vec<Region>>;
+
+#[derive(Debug, Default)]
+struct Region(Vec<Vec2u>);
+
+impl Region {
+	fn price(&self) -> usize {
+		self.area() * self.perimeter()
+	}
+
+	fn area(&self) -> usize {
+		self.0.len()
+	}
+
+	fn perimeter(&self) -> usize {
+		self.0
+			.iter()
+			.map(|plot| 4 - self.neighbor_count(plot))
+			.sum()
+	}
+
+	fn neighbor_count(&self, plot: &Vec2u) -> usize {
+		Vec2::cardinal()
+			.iter()
+			.filter(|dir| match (plot.sign() + **dir).unsign() {
+				Some(neighbor) => self.0.contains(&neighbor),
+				None => false,
+			})
+			.count()
+	}
+}
+
 pub fn part1() -> usize {
-	todo!()
+	let plots = ProxyMap::from(INPUT).convert(|string| string.bytes().collect::<Vec<_>>());
+	let mut regions = BTreeMap::<u8, Region>::new();
+
+	for (i, plot) in plots.values.iter().enumerate() {
+		regions
+			.entry(*plot)
+			.or_default()
+			.0
+			.push(plots.get_pos(i).unwrap());
+	}
+
+	regions
+		.iter()
+		.map(|(fruit, region)| (*fruit as char, (region.area(), region.perimeter())))
+		.for_each(|x| {
+			dbg!(x);
+		});
+
+	regions.values().map(|region| region.price()).sum()
 }
 
 pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = MIN_INPUT;
+
+const MIN_INPUT: &str = "
+AAA
+BBB
+CCC
+AAA
+";
 
 const TEST_INPUT: &str = "
 RRRRIICCFF
