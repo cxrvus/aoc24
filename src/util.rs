@@ -29,6 +29,10 @@ pub mod vec2 {
 			}
 		}
 
+		pub fn cardinal() -> [Vec2; 4] {
+			[-Vec2::Y, Vec2::X, Vec2::Y, -Vec2::X]
+		}
+
 		pub const X: Self = Self { x: 1, y: 0 };
 		pub const Y: Self = Self { x: 0, y: 1 };
 		pub const ZERO: Self = Self { x: 0, y: 0 };
@@ -147,6 +151,24 @@ pub mod map {
 		pub width: usize,
 		pub height: usize,
 		pub string: String,
+	}
+
+	impl ProxyMap {
+		pub fn convert<T: Debug + PartialEq>(self, f: fn(String) -> Vec<T>) -> Map<T> {
+			let Self {
+				width,
+				height,
+				string,
+			} = self;
+
+			let values = f(string);
+
+			Map {
+				width,
+				height,
+				values,
+			}
+		}
 	}
 
 	impl From<&str> for ProxyMap {
