@@ -13,7 +13,7 @@ impl From<&str> for FlatStones {
 }
 
 impl FlatStones {
-	fn blink(&mut self, n: u64) {
+	fn blink(&mut self, n: u32) {
 		let stones = &mut self.0;
 		for blink in 0..n {
 			let mut insertions = 0;
@@ -29,30 +29,20 @@ impl FlatStones {
 					stones[i] *= 2024
 				}
 			}
-			dbg!(&stones, blink);
+			dbg!(&stones.len(), blink);
 		}
 	}
 
 	fn split(stone: u64) -> Option<(u64, u64)> {
-		let mut n = stone;
-		let mut count = 1u32;
+		let digit_count = ((stone as f64).log10().floor() + 1.) as u32;
 
-		while n >= 10 {
-			n /= 10;
-			count += 1;
-		}
-
-		if count % 2 != 0 {
+		if digit_count % 2 != 0 {
 			None
 		} else {
-			let half_count = count / 2;
-			let mut left = stone;
+			let half_count = digit_count / 2;
 
-			for _ in 0..half_count {
-				left /= 10;
-			}
-
-			let right = stone - left * 10u64.pow(half_count);
+			let left = stone / 10u64.pow(half_count);
+			let right = stone % 10u64.pow(half_count);
 
 			Some((left, right))
 		}
@@ -81,14 +71,14 @@ impl Stone {
 
 pub fn part1() -> usize {
 	let mut stones = FlatStones::from(INPUT);
-	stones.blink(75);
+	stones.blink(25);
 	stones.0.len()
 }
 
 pub fn part2() -> usize {
-	let stones = FlatStones::from(INPUT);
-	let stones = Stone::vec(stones);
-	todo!()
+	let mut stones = FlatStones::from(INPUT);
+	stones.blink(75);
+	stones.0.len()
 }
 
 const INPUT: &str = PROD_INPUT;
