@@ -85,7 +85,27 @@ impl Region {
 	}
 
 	fn sides(&self) -> usize {
-		todo!()
+		let perimetric_plots = self.perimetric_plots();
+		let perimetric_neighbors = perimetric_plots
+			.iter()
+			.flat_map(|plot| self.neighbors(plot, true))
+			.map(|(plot, dir)| (plot + Vec2 { x: 1, y: 1 }, dir));
+
+		let cardinal_dirs = Vec2::cardinal();
+		let mut cardinal_regions: [Self; 4] = Default::default();
+
+		for (plot, dir) in perimetric_neighbors {
+			let dir_index = cardinal_dirs
+				.iter()
+				.position(|&cardinal| cardinal == dir)
+				.unwrap();
+			cardinal_regions[dir_index].0.push(plot);
+		}
+
+		cardinal_regions
+			.iter()
+			.map(|region| region.get_sub_regions().len())
+			.sum()
 	}
 
 	fn perimeter(&self) -> usize {
@@ -125,10 +145,10 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
-	RegionMap::new(INPUT).total_price(false)
+	RegionMap::new(INPUT).total_price(true)
 }
 
-const INPUT: &str = TEST_INPUT1;
+const INPUT: &str = PROD_INPUT;
 
 const TEST_INPUT1: &str = "
 RRRRIICCFF
