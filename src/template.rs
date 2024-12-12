@@ -6,12 +6,12 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = TEST_INPUT;
+const INPUT: &str = INPUT1;
 
-const TEST_INPUT: &str = "
+const INPUT1: &str = "
 
 ";
 
-const PROD_INPUT: &str = "
+const INPUT0: &str = "
 
 ";
