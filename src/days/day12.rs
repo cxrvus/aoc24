@@ -3,8 +3,34 @@ use std::collections::BTreeMap;
 
 type Plot = Vec2u;
 
+struct RegionMap(BTreeMap<u8, Region>);
+
+impl RegionMap {
+	fn new(input: &str) -> Self {
+		let plot_map = ProxyMap::from(input).convert(|string| string.bytes().collect::<Vec<_>>());
+		let mut region_map = BTreeMap::<u8, Region>::new();
+
+		for (i, plot) in plot_map.values.iter().enumerate() {
+			region_map
+				.entry(*plot)
+				.or_default()
+				.0
+				.push(plot_map.get_pos(i).unwrap());
+		}
+
+		Self(region_map)
+	}
+
+	fn total_price(&self, discount: bool) -> usize {
+		self.0
+			.values()
+			.map(|region| region.total_price(discount))
+			.sum()
+	}
+}
+
 #[derive(Debug, Default)]
-struct Region(Vec<Vec2u>);
+struct Region(Vec<Plot>);
 
 impl Region {
 	fn get_sub_regions(&self) -> Vec<Self> {
@@ -34,10 +60,14 @@ impl Region {
 		sub_regions
 	}
 
-	fn total_price(&self) -> usize {
+	fn total_price(&self, discount: bool) -> usize {
 		self.get_sub_regions()
 			.iter()
-			.map(|region| region.price())
+			.map(if discount {
+				Self::discount_price
+			} else {
+				Self::price
+			})
 			.sum()
 	}
 
@@ -45,8 +75,16 @@ impl Region {
 		self.area() * self.perimeter()
 	}
 
+	fn discount_price(&self) -> usize {
+		self.area() * self.sides()
+	}
+
 	fn area(&self) -> usize {
 		self.0.len()
+	}
+
+	fn sides(&self) -> usize {
+		todo!()
 	}
 
 	fn perimeter(&self) -> usize {
@@ -54,6 +92,14 @@ impl Region {
 			.iter()
 			.map(|plot| 4 - self.neighbors(plot).len())
 			.sum()
+	}
+
+	fn perimetric_plots(&self) -> Vec<Plot> {
+		self.0
+			.iter()
+			.filter(|plot| self.neighbors(plot).len() < 4)
+			.copied()
+			.collect()
 	}
 
 	fn neighbors(&self, plot: &Plot) -> Vec<Plot> {
@@ -66,43 +112,16 @@ impl Region {
 }
 
 pub fn part1() -> usize {
-	let plots = ProxyMap::from(INPUT).convert(|string| string.bytes().collect::<Vec<_>>());
-	let mut regions = BTreeMap::<u8, Region>::new();
-
-	for (i, plot) in plots.values.iter().enumerate() {
-		regions
-			.entry(*plot)
-			.or_default()
-			.0
-			.push(plots.get_pos(i).unwrap());
-	}
-
-	// for (fruit, region) in regions.iter() {
-	// 	let sub_regions = region.get_sub_regions();
-
-	// 	let stats = sub_regions
-	// 		.iter()
-	// 		.map(|region| (region.area(), region.perimeter()))
-	// 		.collect::<Vec<_>>();
-
-	// 	dbg!((*fruit as char, stats));
-	// }
-
-	regions.values().map(|region| region.total_price()).sum()
+	RegionMap::new(INPUT).total_price(false)
 }
 
 pub fn part2() -> usize {
-	todo!()
+	RegionMap::new(INPUT).total_price(false)
 }
 
-const INPUT: &str = PROD_INPUT;
+const INPUT: &str = TEST_INPUT1;
 
-const MIN_INPUT: &str = "
-RRRRIICCFF
-RRRRIICCCF
-";
-
-const TEST_INPUT: &str = "
+const TEST_INPUT1: &str = "
 RRRRIICCFF
 RRRRIICCCF
 VVRRRCCFFF
@@ -113,6 +132,23 @@ VVIIICJJEE
 MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE 
+";
+
+const TEST_INPUT2: &str = "
+EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE
+";
+
+const TEST_INPUT3: &str = "
+AAAAAA
+AAABBA
+AAABBA
+ABBAAA
+ABBAAA
+AAAAAA
 ";
 
 const PROD_INPUT: &str = "
