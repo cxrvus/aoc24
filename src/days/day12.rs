@@ -1,7 +1,7 @@
 use crate::util::*;
 use std::collections::BTreeMap;
 
-type Plot = Vec2u;
+type Plot = Vec2;
 
 struct RegionMap(BTreeMap<u8, Region>);
 
@@ -15,7 +15,7 @@ impl RegionMap {
 				.entry(*plot)
 				.or_default()
 				.0
-				.push(plot_map.get_pos(i).unwrap());
+				.push(plot_map.get_pos(i).unwrap().sign());
 		}
 
 		Self(region_map)
@@ -42,10 +42,11 @@ impl Region {
 			let mut perimetric_plots: Vec<Plot> = vec![start_plot];
 
 			while let Some(perimetric_plot) = perimetric_plots.pop() {
-				let neighbors = self.neighbors(&perimetric_plot);
+				let neighbors = self.neighbors(&perimetric_plot, false);
 
 				let new_neighbors = neighbors
 					.iter()
+					.map(|(plot, _)| plot)
 					.filter(|neighbor| !sub_plots.contains(neighbor))
 					.collect::<Vec<_>>();
 
@@ -90,23 +91,31 @@ impl Region {
 	fn perimeter(&self) -> usize {
 		self.0
 			.iter()
-			.map(|plot| 4 - self.neighbors(plot).len())
+			.map(|plot| self.neighbors(plot, true).len())
 			.sum()
 	}
 
 	fn perimetric_plots(&self) -> Vec<Plot> {
 		self.0
 			.iter()
-			.filter(|plot| self.neighbors(plot).len() < 4)
+			.filter(|plot| !self.neighbors(plot, true).is_empty())
 			.copied()
 			.collect()
 	}
 
-	fn neighbors(&self, plot: &Plot) -> Vec<Plot> {
+	fn neighbors(&self, plot: &Plot, is_empty: bool) -> Vec<(Plot, Vec2)> {
 		Vec2::cardinal()
 			.iter()
-			.filter_map(|dir| (plot.sign() + *dir).unsign())
-			.filter(|pos| self.0.contains(pos))
+			.filter_map(|dir| {
+				let next_plot = *plot + *dir;
+				let in_bounds = next_plot.unsign().is_some();
+				let is_filled = in_bounds && self.0.contains(&next_plot);
+				if is_empty ^ is_filled {
+					Some((next_plot, *dir))
+				} else {
+					None
+				}
+			})
 			.collect()
 	}
 }
