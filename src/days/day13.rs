@@ -41,8 +41,6 @@ impl Machine {
 			prize,
 		} = self;
 
-		let mut costs: Vec<usize> = vec![];
-
 		for a in 0..100usize {
 			for b in 0..100usize {
 				let pos = *button_a * a + *button_b * b;
@@ -52,14 +50,12 @@ impl Machine {
 				}
 
 				if pos == *prize {
-					let cost = 3 * a + b;
-					costs.push(cost);
-					break;
+					return Some(3 * a + b);
 				}
 			}
 		}
 
-		costs.iter().min().copied()
+		None
 	}
 }
 
@@ -85,7 +81,7 @@ pub fn part2() -> usize {
 		.sum()
 }
 
-const INPUT: &str = INPUT2;
+const INPUT: &str = INPUT0;
 
 const INPUT2: &str = "
 Button A: X+94, Y+34
