@@ -1,4 +1,46 @@
+use crate::util::vec2::*;
+use regex::{self, Captures, Regex};
+
+#[derive(Debug)]
+struct Machine {
+	button_a: Vec2u,
+	button_b: Vec2u,
+	price: Vec2u,
+}
+
+impl Machine {
+	fn from_str(spec: &str) -> Self {
+		fn parse_line(spec: &str) -> Vec2u {
+			let parts: Vec<usize> = Regex::new(r#"(\d+).+?(\d+)"#)
+				.unwrap()
+				.captures(spec)
+				.unwrap()
+				.iter()
+				.filter_map(|cap| cap.unwrap().as_str().parse().ok())
+				.collect();
+
+			Vec2u {
+				x: parts[0],
+				y: parts[1],
+			}
+		}
+
+		let mut lines = spec.lines();
+
+		Self {
+			button_a: parse_line(lines.next().unwrap()),
+			button_b: parse_line(lines.next().unwrap()),
+			price: parse_line(lines.next().unwrap()),
+		}
+	}
+}
+
+fn parse(input: &str) -> Vec<Machine> {
+	input.trim().split("\n\n").map(Machine::from_str).collect()
+}
+
 pub fn part1() -> usize {
+	dbg!(parse(INPUT));
 	todo!()
 }
 
@@ -6,7 +48,7 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT2;
+const INPUT: &str = INPUT1;
 
 const INPUT2: &str = "
 Button A: X+94, Y+34
