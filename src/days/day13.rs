@@ -5,29 +5,7 @@ use regex::Regex;
 struct Machine {
 	button_a: Vec2u,
 	button_b: Vec2u,
-	price: Vec2u,
-}
-
-#[derive(Debug, Default)]
-enum Button {
-	#[default]
-	A,
-	B,
-}
-
-struct Node {
-	button: Button,
-	end_pos: Vec2u,
-}
-
-impl Button {
-	fn next(&self) -> Option<Self> {
-		use Button::*;
-		match self {
-			A => Some(B),
-			B => None,
-		}
-	}
+	prize: Vec2u,
 }
 
 impl Machine {
@@ -52,7 +30,7 @@ impl Machine {
 		Self {
 			button_a: parse_line(lines.next().unwrap()),
 			button_b: parse_line(lines.next().unwrap()),
-			price: parse_line(lines.next().unwrap()),
+			prize: parse_line(lines.next().unwrap()),
 		}
 	}
 
@@ -60,35 +38,28 @@ impl Machine {
 		let Self {
 			button_a,
 			button_b,
-			price,
+			prize,
 		} = self;
 
-		let mut presses = Vec::<Node>::new();
-		let mut prices = Vec::<usize>::new();
+		let mut costs: Vec<usize> = vec![];
 
-		for _ in 0..100 {
-			let mut button = Button::default();
+		for a in 0..100usize {
+			for b in 0..100usize {
+				let pos = *button_a * a + *button_b * b;
 
-			loop {
-				if let Some(next_button) = button.next() {
-					button = next_button;
-				} else {
+				if pos.x > prize.x || pos.y > prize.y {
+					break;
+				}
+
+				if pos == *prize {
+					let cost = 3 * a + b;
+					costs.push(cost);
 					break;
 				}
 			}
-
-			todo!();
 		}
 
-		todo!();
-	}
-
-	fn move_arm(&self, start_pos: Vec2u, button: Button) -> Vec2u {
-		start_pos
-			+ match button {
-				Button::A => self.button_a,
-				Button::B => self.button_b,
-			}
+		costs.iter().min().copied()
 	}
 }
 
@@ -97,7 +68,7 @@ fn parse(input: &str) -> Vec<Machine> {
 }
 
 pub fn part1() -> usize {
-	dbg!(parse(INPUT))
+	parse(INPUT)
 		.iter()
 		.filter_map(|machine| machine.min_tokens())
 		.sum()
@@ -107,7 +78,7 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT2;
+const INPUT: &str = INPUT0;
 
 const INPUT2: &str = "
 Button A: X+94, Y+34
