@@ -1,11 +1,33 @@
 use crate::util::vec2::*;
-use regex::{self, Captures, Regex};
+use regex::Regex;
 
 #[derive(Debug)]
 struct Machine {
 	button_a: Vec2u,
 	button_b: Vec2u,
 	price: Vec2u,
+}
+
+#[derive(Debug, Default)]
+enum Button {
+	#[default]
+	A,
+	B,
+}
+
+struct Node {
+	button: Button,
+	end_pos: Vec2u,
+}
+
+impl Button {
+	fn next(&self) -> Option<Self> {
+		use Button::*;
+		match self {
+			A => Some(B),
+			B => None,
+		}
+	}
 }
 
 impl Machine {
@@ -33,6 +55,41 @@ impl Machine {
 			price: parse_line(lines.next().unwrap()),
 		}
 	}
+
+	fn min_tokens(&self) -> Option<usize> {
+		let Self {
+			button_a,
+			button_b,
+			price,
+		} = self;
+
+		let mut presses = Vec::<Node>::new();
+		let mut prices = Vec::<usize>::new();
+
+		for _ in 0..100 {
+			let mut button = Button::default();
+
+			loop {
+				if let Some(next_button) = button.next() {
+					button = next_button;
+				} else {
+					break;
+				}
+			}
+
+			todo!();
+		}
+
+		todo!();
+	}
+
+	fn move_arm(&self, start_pos: Vec2u, button: Button) -> Vec2u {
+		start_pos
+			+ match button {
+				Button::A => self.button_a,
+				Button::B => self.button_b,
+			}
+	}
 }
 
 fn parse(input: &str) -> Vec<Machine> {
@@ -40,15 +97,17 @@ fn parse(input: &str) -> Vec<Machine> {
 }
 
 pub fn part1() -> usize {
-	dbg!(parse(INPUT));
-	todo!()
+	dbg!(parse(INPUT))
+		.iter()
+		.filter_map(|machine| machine.min_tokens())
+		.sum()
 }
 
 pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT1;
+const INPUT: &str = INPUT2;
 
 const INPUT2: &str = "
 Button A: X+94, Y+34

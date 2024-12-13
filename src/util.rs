@@ -48,6 +48,28 @@ pub mod vec2 {
 		}
 	}
 
+	impl ops::Add<Vec2u> for Vec2u {
+		type Output = Self;
+
+		fn add(self, other: Vec2u) -> Self::Output {
+			Self {
+				x: self.x + other.x,
+				y: self.y + other.y,
+			}
+		}
+	}
+
+	impl ops::Mul<usize> for Vec2u {
+		type Output = Self;
+
+		fn mul(self, scalar: usize) -> Self::Output {
+			Self {
+				x: self.x * scalar,
+				y: self.y * scalar,
+			}
+		}
+	}
+
 	impl ops::Add<Vec2> for Vec2 {
 		type Output = Self;
 
