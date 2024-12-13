@@ -75,10 +75,17 @@ pub fn part1() -> usize {
 }
 
 pub fn part2() -> usize {
-	todo!()
+	parse(INPUT)
+		.iter()
+		.map(|machine| Machine {
+			prize: machine.prize * 10000000000000,
+			..*machine
+		})
+		.filter_map(|machine| machine.min_tokens())
+		.sum()
 }
 
-const INPUT: &str = INPUT0;
+const INPUT: &str = INPUT2;
 
 const INPUT2: &str = "
 Button A: X+94, Y+34
