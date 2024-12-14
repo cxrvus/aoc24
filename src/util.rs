@@ -103,6 +103,17 @@ pub mod vec2 {
 		}
 	}
 
+	impl ops::Rem<Vec2> for Vec2 {
+		type Output = Self;
+
+		fn rem(self, other: Vec2) -> Self::Output {
+			Self {
+				x: self.x.rem_euclid(other.x),
+				y: self.y.rem_euclid(other.y),
+			}
+		}
+	}
+
 	impl ops::Neg for Vec2 {
 		type Output = Self;
 
