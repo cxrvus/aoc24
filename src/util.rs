@@ -177,6 +177,13 @@ pub mod map {
 				y: (i / self.width),
 			})
 		}
+
+		pub fn dimensions(&self) -> Vec2u {
+			Vec2u {
+				x: self.width,
+				y: self.height,
+			}
+		}
 	}
 
 	#[derive(Debug)]
