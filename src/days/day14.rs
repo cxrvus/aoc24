@@ -46,6 +46,35 @@ impl Map<usize> {
 		self.set_at(pos, next);
 	}
 
+	fn safety_factor(&self) -> usize {
+		let Vec2u { x, y } = self.dimensions();
+		let (half_width, half_height) = (x / 2, y / 2);
+
+		let mut quadrants: [usize; 4] = Default::default();
+
+		for (i, value) in self.values.iter().enumerate() {
+			let Vec2u { x, y } = self.get_pos(i).unwrap();
+
+			let q = if x < half_width && y < half_height {
+				Some(0)
+			} else if x > half_width && y < half_height {
+				Some(1)
+			} else if x < half_width && y > half_height {
+				Some(2)
+			} else if x > half_width && y > half_height {
+				Some(3)
+			} else {
+				None
+			};
+
+			if let Some(q) = q {
+				quadrants[q] += value
+			}
+		}
+
+		quadrants.iter().product()
+	}
+
 	fn as_string(&self) -> String {
 		self.values
 			.iter()
@@ -58,10 +87,6 @@ impl Map<usize> {
 			.chunks(self.width)
 			.map(|chunk| chunk.join("") + "\n")
 			.collect()
-	}
-
-	fn safety_factor(&self) -> usize {
-		todo!()
 	}
 }
 
@@ -107,8 +132,6 @@ pub fn part1() -> usize {
 
 	map.simulate(&robots, 100, false);
 
-	println!("{}", map.as_string());
-
 	map.safety_factor()
 }
 
@@ -118,7 +141,7 @@ pub fn part2() -> usize {
 
 type Input = (usize, usize, &'static str);
 
-const INPUT: Input = INPUT1;
+const INPUT: Input = INPUT0;
 
 const INPUT2: Input = (2, 2, "p=0,0 v=1,1");
 
