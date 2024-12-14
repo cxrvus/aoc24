@@ -33,9 +33,9 @@ impl Map<usize> {
 				self.incr_at(pos, 1);
 			}
 
-			if debug {
+			if debug && sec % 101 == 13 {
 				println!("{}:\n\n{}", sec, self.as_string());
-				thread::sleep(Duration::from_secs_f32(0.2));
+				thread::sleep(Duration::from_secs_f32(0.02));
 			}
 		}
 	}
@@ -79,14 +79,14 @@ impl Map<usize> {
 		self.values
 			.iter()
 			.map(|x| match x {
-				0 => ".".into(),
-				1..9 => x.to_string(),
-				_ => "9".into(),
+				0 => "  ".to_string(),
+				_ => "##".to_string(),
 			})
 			.collect::<Vec<_>>()
 			.chunks(self.width)
 			.map(|chunk| chunk.join("") + "\n")
-			.collect()
+			.collect::<String>()
+			+ &"=".repeat(self.width * 2)
 	}
 }
 
@@ -130,13 +130,13 @@ pub fn part1() -> usize {
 	let mut map = Map::from((width, height));
 	let robots = Robot::parse_vec(string);
 
-	map.simulate(&robots, 100, false);
+	map.simulate(&robots, 10000, true);
 
 	map.safety_factor()
 }
 
 pub fn part2() -> usize {
-	todo!()
+	unimplemented!()
 }
 
 type Input = (usize, usize, &'static str);
