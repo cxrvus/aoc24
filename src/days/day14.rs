@@ -1,5 +1,115 @@
+use std::{thread, time::Duration};
+
+use crate::util::*;
+use regex::Regex;
+
+impl From<(usize, usize)> for Map<usize> {
+	fn from(dimensions: (usize, usize)) -> Self {
+		let (width, height) = dimensions;
+
+		Self {
+			width,
+			height,
+			values: vec![0; width * height],
+		}
+	}
+}
+
+impl Map<usize> {
+	fn simulate(&mut self, robots: &[Robot], seconds: usize, debug: bool) {
+		robots.iter().for_each(|robot| self.incr_at(&robot.pos, 1));
+
+		let dimensions = self.dimensions().sign();
+		let mut robots = robots.to_vec();
+
+		for sec in 0..seconds {
+			for Robot { pos, vel } in robots.iter_mut() {
+				self.incr_at(pos, -1);
+
+				let next_pos = (*pos + *vel) % dimensions;
+
+				*pos = next_pos;
+
+				self.incr_at(pos, 1);
+			}
+
+			if debug {
+				println!("{}:\n\n{}", sec, self.as_string());
+				thread::sleep(Duration::from_secs_f32(0.2));
+			}
+		}
+	}
+
+	fn incr_at(&mut self, pos: &Vec2, incr: i32) {
+		let prev = self.at(pos).unwrap();
+		let next = (*prev as i32 + incr) as usize;
+		self.set_at(pos, next);
+	}
+
+	fn as_string(&self) -> String {
+		self.values
+			.iter()
+			.map(|x| match x {
+				0 => ".".into(),
+				1..9 => x.to_string(),
+				_ => "9".into(),
+			})
+			.collect::<Vec<_>>()
+			.chunks(self.width)
+			.map(|chunk| chunk.join("") + "\n")
+			.collect()
+	}
+
+	fn safety_factor(&self) -> usize {
+		todo!()
+	}
+}
+
+#[derive(Debug, Clone)]
+struct Robot {
+	pos: Vec2,
+	vel: Vec2,
+}
+
+impl Robot {
+	fn parse_vec(input: &str) -> Vec<Self> {
+		let re = Regex::new(r#"-?\d+"#).unwrap();
+
+		input
+			.trim()
+			.lines()
+			.map(|line| {
+				let values = re
+					.captures_iter(line)
+					.map(|cap| cap[0].parse::<i32>().unwrap())
+					.collect::<Vec<_>>();
+
+				let pos = Vec2 {
+					x: values[0],
+					y: values[1],
+				};
+
+				let vel = Vec2 {
+					x: values[2],
+					y: values[3],
+				};
+
+				Self { pos, vel }
+			})
+			.collect()
+	}
+}
+
 pub fn part1() -> usize {
-	todo!()
+	let (width, height, string) = INPUT;
+	let mut map = Map::from((width, height));
+	let robots = Robot::parse_vec(string);
+
+	map.simulate(&robots, 100, false);
+
+	println!("{}", map.as_string());
+
+	map.safety_factor()
 }
 
 pub fn part2() -> usize {
@@ -9,6 +119,8 @@ pub fn part2() -> usize {
 type Input = (usize, usize, &'static str);
 
 const INPUT: Input = INPUT1;
+
+const INPUT2: Input = (2, 2, "p=0,0 v=1,1");
 
 const INPUT1: Input = (
 	11,
