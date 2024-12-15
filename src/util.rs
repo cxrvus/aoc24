@@ -1,5 +1,11 @@
+use std::{thread, time::Duration};
+
 pub use map::*;
 pub use vec2::*;
+
+pub fn sleep(secs: f32) {
+	thread::sleep(Duration::from_secs_f32(secs));
+}
 
 pub mod vec2 {
 	use std::ops;

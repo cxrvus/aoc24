@@ -1,5 +1,3 @@
-use std::{thread, time::Duration};
-
 use crate::util::*;
 use regex::Regex;
 
@@ -35,7 +33,7 @@ impl Map<usize> {
 
 			if debug && sec % 101 == 13 {
 				println!("{}:\n\n{}", sec, self.as_string());
-				thread::sleep(Duration::from_secs_f32(0.02));
+				sleep(0.02);
 			}
 		}
 	}
