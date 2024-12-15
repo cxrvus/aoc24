@@ -161,6 +161,30 @@ impl Map<Tile> {
 		*pos = *next_pos;
 	}
 
+	fn expand(&mut self) {
+		let mut expanded_tiles = vec![];
+
+		for tile in &self.values {
+			let (left, right) = tile.expand();
+			expanded_tiles.push(left);
+			expanded_tiles.push(right);
+		}
+
+		self.values = expanded_tiles;
+		self.width *= 2;
+	}
+
+	fn contract(&mut self) {
+		self.values = self
+			.values
+			.iter()
+			.enumerate()
+			.filter_map(|(i, &tile)| if i % 2 == 0 { Some(tile) } else { None })
+			.collect();
+
+		self.width /= 2;
+	}
+
 	fn gps_sum(&self) -> usize {
 		self.find_all(Tile::Box(false))
 			.iter()
