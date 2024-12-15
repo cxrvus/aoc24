@@ -133,7 +133,7 @@ pub mod vec2 {
 }
 
 pub mod map {
-	use super::super::util::vec2::*;
+	use crate::util::vec2::*;
 	use std::fmt::Debug;
 
 	#[derive(Debug, Clone)]
@@ -200,19 +200,11 @@ pub mod map {
 	}
 
 	impl ProxyMap {
-		pub fn convert<T: Debug + PartialEq>(self, f: fn(String) -> Vec<T>) -> Map<T> {
-			let Self {
-				width,
-				height,
-				string,
-			} = self;
-
-			let values = f(string);
-
+		pub fn convert<T: Debug + PartialEq>(self, parser: fn(String) -> Vec<T>) -> Map<T> {
 			Map {
-				width,
-				height,
-				values,
+				width: self.width,
+				height: self.height,
+				values: parser(self.string),
 			}
 		}
 	}
