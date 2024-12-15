@@ -130,7 +130,7 @@ pub mod map {
 	use super::super::util::vec2::*;
 	use std::fmt::Debug;
 
-	#[derive(Debug)]
+	#[derive(Debug, Clone)]
 	pub struct Map<T: Debug + PartialEq> {
 		pub width: usize,
 		pub height: usize,

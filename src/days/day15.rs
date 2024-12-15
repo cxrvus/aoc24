@@ -1,14 +1,169 @@
+use crate::util::*;
+use parsing::*;
+
+mod parsing {
+	use super::*;
+
+	impl From<u8> for Tile {
+		fn from(value: u8) -> Self {
+			use Tile::*;
+
+			match value {
+				b'.' => Empty,
+				b'O' => Box,
+				b'#' => Obstacle,
+				b'@' => Robot,
+				_ => unimplemented!(),
+			}
+		}
+	}
+
+	impl From<Tile> for char {
+		fn from(value: Tile) -> Self {
+			use Tile::*;
+
+			(match value {
+				Empty => b'.',
+				Box => b'O',
+				Obstacle => b'#',
+				Robot => b'@',
+			}) as char
+		}
+	}
+
+	impl From<u8> for Vec2 {
+		fn from(value: u8) -> Self {
+			match value {
+				b'^' => -Vec2::Y,
+				b'>' => Vec2::X,
+				b'v' => Vec2::Y,
+				b'<' => -Vec2::X,
+				_ => Vec2::ZERO,
+			}
+		}
+	}
+
+	impl From<Vec2> for String {
+		fn from(value: Vec2) -> Self {
+			(match value {
+				v if v == -Vec2::Y => "^",
+				v if v == Vec2::X => ">",
+				v if v == Vec2::Y => "v",
+				v if v == -Vec2::X => "<",
+				_ => unimplemented!(),
+			})
+			.into()
+		}
+	}
+
+	impl From<Map<Tile>> for String {
+		fn from(map: Map<Tile>) -> Self {
+			map.values
+				.chunks(map.width)
+				.map(|tiles| {
+					tiles
+						.iter()
+						.map(|tile| char::from(*tile))
+						.collect::<String>()
+				})
+				.collect::<Vec<_>>()
+				.join("\n")
+		}
+	}
+
+	impl From<&str> for Map<Tile> {
+		fn from(value: &str) -> Self {
+			ProxyMap::from(value).convert(|string| string.bytes().map(Tile::from).collect())
+		}
+	}
+
+	pub fn parse(value: &str) -> (Map<Tile>, Vec<Vec2>) {
+		let (map, movements) = value.trim().split_once("\n\n").unwrap();
+		let map = Map::<Tile>::from(map);
+		let movements = dbg!(movements.bytes())
+			.map(Vec2::from)
+			.filter(|v| *v != Vec2::ZERO)
+			.collect::<Vec<_>>();
+		(map, movements)
+	}
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Tile {
+	Empty,
+	Box,
+	Obstacle,
+	Robot,
+}
+
+impl Map<Tile> {
+	fn move_all(&mut self, movements: Vec<Vec2>) {
+		let mut pos = self.find_all(Tile::Robot)[0].sign();
+
+		for dir in movements {
+			let next_pos = pos + dir;
+
+			if let Some(next_tile) = self.at(&next_pos) {
+				let mut search_index = 2;
+
+				match next_tile {
+					Tile::Empty => self.move_robot(&mut pos, &next_pos),
+					Tile::Box => loop {
+						let search_pos = pos + dir * search_index;
+
+						if let Some(search_tile) = self.at(&search_pos) {
+							match search_tile {
+								Tile::Empty => {
+									self.move_robot(&mut pos, &next_pos);
+									self.set_at(&search_pos, Tile::Box);
+									break;
+								}
+								Tile::Obstacle => break,
+								_ => {}
+							}
+						} else {
+							break;
+						}
+
+						search_index += 1;
+					},
+					Tile::Obstacle => {}
+					Tile::Robot => unimplemented!(),
+				}
+			}
+
+			println!("{}\n{}\n", String::from(dir), String::from(self.clone()));
+		}
+	}
+
+	fn move_robot(&mut self, pos: &mut Vec2, next_pos: &Vec2) {
+		self.set_at(pos, Tile::Empty);
+		self.set_at(next_pos, Tile::Robot);
+		*pos = *next_pos;
+	}
+
+	fn gps_sum(&self) -> usize {
+		self.find_all(Tile::Box)
+			.iter()
+			.map(|Vec2u { x, y }| y * 100 + x)
+			.sum()
+	}
+}
+
 pub fn part1() -> usize {
-	todo!()
+	let (mut map, movements) = parsing::parse(INPUT);
+	map.move_all(movements);
+	println!("{}", String::from(map.clone()));
+	map.gps_sum()
 }
 
 pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT1;
+const INPUT: &str = INPUT0;
 
-const INPUT1: &str = "
+const INPUT2: &str = "
 ########
 #..O.O.#
 ##@.O..#
@@ -19,6 +174,30 @@ const INPUT1: &str = "
 ########
 
 <^^>>>vv<v>>v<<
+";
+
+const INPUT1: &str = "
+##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
 ";
 
 const INPUT0: &str = "
