@@ -171,12 +171,33 @@ mod map {
 		}
 
 		fn expanded_move_once(&mut self, pos: &mut Vec2, dir: &Vec2) {
-			todo!()
+            // todo: movements[x].1 is constant (=dir), => turn into Vec<Vec2>
+			let movements: Vec<(Vec2, Vec2)> = vec![];
+
+			// direction is horizontal
+			if dir.x != 0 {
+				let mut i = 1;
+				loop {
+					todo!();
+					i += 1;
+				}
+			} else {
+				todo!()
+			}
+
+			for (pos, next_pos) in movements.iter().rev() {
+				self.move_tile(&pos, &next_pos);
+			}
+		}
+
+		fn move_tile(&mut self, pos: &Vec2, next_pos: &Vec2) {
+			let tile = *self.at(pos).unwrap();
+			self.set_at(pos, Tile::Empty);
+			self.set_at(next_pos, tile);
 		}
 
 		fn move_robot(&mut self, pos: &mut Vec2, next_pos: &Vec2) {
-			self.set_at(pos, Tile::Empty);
-			self.set_at(next_pos, Tile::Robot);
+			self.move_tile(pos, next_pos);
 			*pos = *next_pos;
 		}
 
@@ -224,7 +245,17 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT0;
+const INPUT: &str = INPUT3;
+
+const INPUT3: &str = "
+######
+#....#
+#@O..#
+#....#
+######
+
+>>>>>
+";
 
 const INPUT2: &str = "
 ########
