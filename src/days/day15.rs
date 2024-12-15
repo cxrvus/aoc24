@@ -10,7 +10,7 @@ mod parsing {
 
 			match value {
 				b'.' => Empty,
-				b'O' => Box,
+				b'O' => Box(false),
 				b'#' => Obstacle,
 				b'@' => Robot,
 				_ => unimplemented!(),
@@ -24,7 +24,13 @@ mod parsing {
 
 			(match value {
 				Empty => b'.',
-				Box => b'O',
+				Box(right) => {
+					if right {
+						b']'
+					} else {
+						b'['
+					}
+				}
 				Obstacle => b'#',
 				Robot => b'@',
 			}) as char
@@ -91,9 +97,22 @@ mod parsing {
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum Tile {
 	Empty,
-	Box,
+	Box(bool),
 	Obstacle,
 	Robot,
+}
+
+impl Tile {
+	fn expand(&self) -> (Self, Self) {
+		use Tile::*;
+
+		match self {
+			Empty => (Empty, Empty),
+			Obstacle => (Obstacle, Obstacle),
+			Box(_) => (Box(false), Box(true)),
+			Robot => (Robot, Empty),
+		}
+	}
 }
 
 impl Map<Tile> {
@@ -108,14 +127,14 @@ impl Map<Tile> {
 
 				match next_tile {
 					Tile::Empty => self.move_robot(&mut pos, &next_pos),
-					Tile::Box => loop {
+					Tile::Box(_) => loop {
 						let search_pos = pos + dir * search_index;
 
 						if let Some(search_tile) = self.at(&search_pos) {
 							match search_tile {
 								Tile::Empty => {
 									self.move_robot(&mut pos, &next_pos);
-									self.set_at(&search_pos, Tile::Box);
+									self.set_at(&search_pos, Tile::Box(false));
 									break;
 								}
 								Tile::Obstacle => break,
@@ -143,7 +162,7 @@ impl Map<Tile> {
 	}
 
 	fn gps_sum(&self) -> usize {
-		self.find_all(Tile::Box)
+		self.find_all(Tile::Box(false))
 			.iter()
 			.map(|Vec2u { x, y }| y * 100 + x)
 			.sum()
