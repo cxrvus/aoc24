@@ -1,4 +1,5 @@
 use crate::util::*;
+use map::*;
 use parsing::*;
 
 mod parsing {
@@ -94,108 +95,127 @@ mod parsing {
 	}
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
-enum Tile {
-	Empty,
-	Box(bool),
-	Obstacle,
-	Robot,
-}
+mod map {
+	use super::*;
 
-impl Tile {
-	fn expand(&self) -> (Self, Self) {
-		use Tile::*;
+	#[derive(Debug, PartialEq, Copy, Clone)]
+	pub enum Tile {
+		Empty,
+		Box(bool),
+		Obstacle,
+		Robot,
+	}
 
-		match self {
-			Empty => (Empty, Empty),
-			Obstacle => (Obstacle, Obstacle),
-			Box(_) => (Box(false), Box(true)),
-			Robot => (Robot, Empty),
+	impl Tile {
+		fn expand(&self) -> (Self, Self) {
+			use Tile::*;
+
+			match self {
+				Empty => (Empty, Empty),
+				Obstacle => (Obstacle, Obstacle),
+				Box(_) => (Box(false), Box(true)),
+				Robot => (Robot, Empty),
+			}
 		}
 	}
-}
 
-impl Map<Tile> {
-	fn move_all(&mut self, movements: Vec<Vec2>) {
-		let mut pos = self.find_all(Tile::Robot)[0].sign();
+	impl Map<Tile> {
+		pub fn move_all(&mut self, movements: Vec<Vec2>, expanded: bool) {
+			let move_once = if expanded {
+				Self::expanded_move_once
+			} else {
+				Self::move_once
+			};
 
-		for dir in movements {
-			let next_pos = pos + dir;
+			let mut pos = self.find_all(Tile::Robot)[0].sign();
 
-			if let Some(next_tile) = self.at(&next_pos) {
-				let mut search_index = 2;
+			for dir in movements {
+				let next_pos = pos + dir;
 
-				match next_tile {
-					Tile::Empty => self.move_robot(&mut pos, &next_pos),
-					Tile::Box(_) => loop {
-						let search_pos = pos + dir * search_index;
+				if let Some(next_tile) = self.at(&next_pos) {
+					match next_tile {
+						Tile::Empty => self.move_robot(&mut pos, &next_pos),
+						Tile::Box(_) => move_once(self, &mut pos, &dir),
+						Tile::Obstacle => {}
+						Tile::Robot => unimplemented!(),
+					}
+				}
 
-						if let Some(search_tile) = self.at(&search_pos) {
-							match search_tile {
-								Tile::Empty => {
-									self.move_robot(&mut pos, &next_pos);
-									self.set_at(&search_pos, Tile::Box(false));
-									break;
-								}
-								Tile::Obstacle => break,
-								_ => {}
-							}
-						} else {
+				println!("{}\n{}\n", String::from(dir), String::from(self.clone()));
+			}
+		}
+
+		fn move_once(&mut self, pos: &mut Vec2, dir: &Vec2) {
+			let mut search_index = 2;
+
+			loop {
+				let next_pos = *pos + *dir;
+				let search_pos = *pos + *dir * search_index;
+
+				if let Some(search_tile) = self.at(&search_pos) {
+					match search_tile {
+						Tile::Empty => {
+							self.move_robot(pos, &next_pos);
+							self.set_at(&search_pos, Tile::Box(false));
 							break;
 						}
-
-						search_index += 1;
-					},
-					Tile::Obstacle => {}
-					Tile::Robot => unimplemented!(),
+						Tile::Obstacle => break,
+						_ => {}
+					}
+				} else {
+					break;
 				}
+
+				search_index += 1;
+			}
+		}
+
+		fn expanded_move_once(&mut self, pos: &mut Vec2, dir: &Vec2) {
+			todo!()
+		}
+
+		fn move_robot(&mut self, pos: &mut Vec2, next_pos: &Vec2) {
+			self.set_at(pos, Tile::Empty);
+			self.set_at(next_pos, Tile::Robot);
+			*pos = *next_pos;
+		}
+
+		fn expand(&mut self) {
+			let mut expanded_tiles = vec![];
+
+			for tile in &self.values {
+				let (left, right) = tile.expand();
+				expanded_tiles.push(left);
+				expanded_tiles.push(right);
 			}
 
-			println!("{}\n{}\n", String::from(dir), String::from(self.clone()));
-		}
-	}
-
-	fn move_robot(&mut self, pos: &mut Vec2, next_pos: &Vec2) {
-		self.set_at(pos, Tile::Empty);
-		self.set_at(next_pos, Tile::Robot);
-		*pos = *next_pos;
-	}
-
-	fn expand(&mut self) {
-		let mut expanded_tiles = vec![];
-
-		for tile in &self.values {
-			let (left, right) = tile.expand();
-			expanded_tiles.push(left);
-			expanded_tiles.push(right);
+			self.values = expanded_tiles;
+			self.width *= 2;
 		}
 
-		self.values = expanded_tiles;
-		self.width *= 2;
-	}
+		fn contract(&mut self) {
+			self.values = self
+				.values
+				.iter()
+				.enumerate()
+				.filter_map(|(i, &tile)| if i % 2 == 0 { Some(tile) } else { None })
+				.collect();
 
-	fn contract(&mut self) {
-		self.values = self
-			.values
-			.iter()
-			.enumerate()
-			.filter_map(|(i, &tile)| if i % 2 == 0 { Some(tile) } else { None })
-			.collect();
+			self.width /= 2;
+		}
 
-		self.width /= 2;
-	}
-
-	fn gps_sum(&self) -> usize {
-		self.find_all(Tile::Box(false))
-			.iter()
-			.map(|Vec2u { x, y }| y * 100 + x)
-			.sum()
+		pub fn gps_sum(&self) -> usize {
+			self.find_all(Tile::Box(false))
+				.iter()
+				.map(|Vec2u { x, y }| y * 100 + x)
+				.sum()
+		}
 	}
 }
 
 pub fn part1() -> usize {
 	let (mut map, movements) = parsing::parse(INPUT);
-	map.move_all(movements);
+	map.move_all(movements, false);
 	println!("{}", String::from(map.clone()));
 	map.gps_sum()
 }
