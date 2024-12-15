@@ -53,10 +53,10 @@ mod parsing {
 	impl From<Vec2> for String {
 		fn from(value: Vec2) -> Self {
 			(match value {
-				v if v == -Vec2::Y => "^",
-				v if v == Vec2::X => ">",
-				v if v == Vec2::Y => "v",
-				v if v == -Vec2::X => "<",
+				v if v == -Vec2::Y => '^',
+				v if v == Vec2::X => '>',
+				v if v == Vec2::Y => 'v',
+				v if v == -Vec2::X => '<',
 				_ => unimplemented!(),
 			})
 			.into()
