@@ -1,5 +1,83 @@
+use crate::util::*;
+
+#[derive(Debug)]
+struct Reindeer {
+	pos: Vec2,
+	dir_i: usize,
+	score: usize,
+}
+
+impl Map<bool> {
+	pub fn get_lowest_score(&self) -> usize {
+		let start = Vec2 {
+			x: 1,
+			y: (self.height - 2) as i32,
+		};
+
+		let end = Vec2 {
+			x: (self.width - 2) as i32,
+			y: 1,
+		};
+
+		let pioneer = Reindeer {
+			pos: start,
+			dir_i: 1,
+			score: 0,
+		};
+
+		let mut exploring: Vec<Reindeer> = vec![pioneer];
+		let mut finished: Vec<usize> = vec![];
+
+		while let Some(explorer) = exploring.pop() {
+			dbg!(&explorer);
+			sleep(1.);
+
+			// todo: make each explorer have their own map, setting false on explored cells
+
+			if explorer.pos == end {
+				finished.push(explorer.score);
+				continue;
+			}
+
+			if let Some(explorer) = self.new_explorer(&explorer, 0, 1) {
+				exploring.push(explorer);
+			}
+
+			if let Some(explorer) = self.new_explorer(&explorer, 1, 1000) {
+				exploring.push(explorer);
+			}
+
+			if let Some(explorer) = self.new_explorer(&explorer, -1, 1000) {
+				exploring.push(explorer);
+			}
+		}
+
+		*finished.iter().min().unwrap()
+	}
+
+	fn new_explorer(&self, prev: &Reindeer, dir_incr: i32, score_incr: usize) -> Option<Reindeer> {
+		let Reindeer { pos, dir_i, score } = prev;
+
+		let dir_i = (*dir_i as i32 + dir_incr).rem_euclid(4) as usize;
+		let dir = Vec2::cardinal()[dir_i];
+		let next_pos = *pos + dir;
+
+		if *self.at(&next_pos).unwrap() {
+			Some(Reindeer {
+				pos: next_pos,
+				dir_i,
+				score: score + score_incr,
+			})
+		} else {
+			None
+		}
+	}
+}
+
 pub fn part1() -> usize {
-	todo!()
+	ProxyMap::from(INPUT)
+		.convert::<bool>(|string| string.bytes().map(|x| x != b'#').collect())
+		.get_lowest_score()
 }
 
 pub fn part2() -> usize {

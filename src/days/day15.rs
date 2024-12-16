@@ -1,6 +1,5 @@
 use crate::util::*;
 use map::*;
-use parsing::*;
 
 mod parsing {
 	use super::*;
