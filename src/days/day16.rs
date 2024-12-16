@@ -5,10 +5,78 @@ struct Reindeer {
 	pos: Vec2,
 	dir_i: usize,
 	score: usize,
+	map: Map<bool>,
+}
+
+impl Reindeer {
+	pub fn advance(&self, dir_incr: i32, score_incr: usize) -> Option<Self> {
+		let Self {
+			pos,
+			dir_i,
+			score,
+			map,
+		} = self;
+
+		let dir_i = (*dir_i as i32 + dir_incr).rem_euclid(4) as usize;
+		let dir = Vec2::cardinal()[dir_i];
+		let next_pos = *pos + dir;
+
+		if *map.at(&next_pos).unwrap() {
+			let mut map = map.clone();
+			map.set_at(pos, false);
+
+			Some(Self {
+				pos: next_pos,
+				dir_i,
+				score: score + score_incr,
+				map,
+			})
+		} else {
+			None
+		}
+	}
 }
 
 impl Map<bool> {
-	pub fn get_lowest_score(&self) -> usize {
+	fn get_lowest_score(&self) -> usize {
+		let (start, end) = self.start_end();
+
+		let pioneer = Reindeer {
+			pos: start,
+			dir_i: 1,
+			score: 0,
+			map: self.clone(),
+		};
+
+		let mut exploring: Vec<Reindeer> = vec![pioneer];
+		let mut finished: Vec<usize> = vec![];
+
+		while let Some(reindeer) = exploring.pop() {
+			self.print(&exploring);
+			sleep(1.1);
+
+			if reindeer.pos == end {
+				finished.push(reindeer.score);
+				continue;
+			}
+
+			if let Some(explorer) = reindeer.advance(0, 1) {
+				exploring.push(explorer);
+			}
+
+			if let Some(explorer) = reindeer.advance(1, 1000) {
+				exploring.push(explorer);
+			}
+
+			if let Some(explorer) = reindeer.advance(-1, 1000) {
+				exploring.push(explorer);
+			}
+		}
+
+		*finished.iter().min().unwrap()
+	}
+
+	fn start_end(&self) -> (Vec2, Vec2) {
 		let start = Vec2 {
 			x: 1,
 			y: (self.height - 2) as i32,
@@ -19,64 +87,41 @@ impl Map<bool> {
 			y: 1,
 		};
 
-		let pioneer = Reindeer {
-			pos: start,
-			dir_i: 1,
-			score: 0,
-		};
-
-		let mut exploring: Vec<Reindeer> = vec![pioneer];
-		let mut finished: Vec<usize> = vec![];
-
-		while let Some(explorer) = exploring.pop() {
-			dbg!(&explorer);
-			sleep(1.);
-
-			// todo: make each explorer have their own map, setting false on explored cells
-
-			if explorer.pos == end {
-				finished.push(explorer.score);
-				continue;
-			}
-
-			if let Some(explorer) = self.new_explorer(&explorer, 0, 1) {
-				exploring.push(explorer);
-			}
-
-			if let Some(explorer) = self.new_explorer(&explorer, 1, 1000) {
-				exploring.push(explorer);
-			}
-
-			if let Some(explorer) = self.new_explorer(&explorer, -1, 1000) {
-				exploring.push(explorer);
-			}
-		}
-
-		*finished.iter().min().unwrap()
+		(start, end)
 	}
 
-	fn new_explorer(&self, prev: &Reindeer, dir_incr: i32, score_incr: usize) -> Option<Reindeer> {
-		let Reindeer { pos, dir_i, score } = prev;
+	fn print(&self, reindeers: &[Reindeer]) {
+		let cardinal = Vec2::cardinal();
+		let (start, end) = self.start_end();
+		let mut acc = String::new();
 
-		let dir_i = (*dir_i as i32 + dir_incr).rem_euclid(4) as usize;
-		let dir = Vec2::cardinal()[dir_i];
-		let next_pos = *pos + dir;
+		for (i, &is_free) in self.values.iter().enumerate() {
+			let pos = self.get_pos(i).unwrap().sign();
 
-		if *self.at(&next_pos).unwrap() {
-			Some(Reindeer {
-				pos: next_pos,
-				dir_i,
-				score: score + score_incr,
-			})
-		} else {
-			None
+			acc += if pos == start {
+				"S"
+			} else if pos == end {
+				"E"
+			} else if let Some(reindeer) = reindeers.iter().find(|x| x.pos == pos) {
+				cardinal[reindeer.dir_i].as_str()
+			} else if is_free {
+				"."
+			} else {
+				"#"
+			};
+
+			if (i + 1) % self.width == 0 {
+				acc += "\n";
+			}
 		}
+
+		println!("{acc}\n");
 	}
 }
 
 pub fn part1() -> usize {
 	ProxyMap::from(INPUT)
-		.convert::<bool>(|string| string.bytes().map(|x| x != b'#').collect())
+		.convert::<bool>(|string| dbg!(string).bytes().map(|x| x != b'#').collect())
 		.get_lowest_score()
 }
 
@@ -84,7 +129,15 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT1;
+const INPUT: &str = INPUT2;
+
+const INPUT2: &str = "
+#####
+#..E#
+#..##
+#S..#
+#####
+";
 
 const INPUT1: &str = "
 ###############
