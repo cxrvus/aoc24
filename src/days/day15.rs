@@ -87,7 +87,8 @@ mod parsing {
 	pub fn parse(value: &str) -> (Map<Tile>, Vec<Vec2>) {
 		let (map, movements) = value.trim().split_once("\n\n").unwrap();
 		let map = Map::<Tile>::from(map);
-		let movements = dbg!(movements.bytes())
+		let movements = movements
+			.bytes()
 			.map(Vec2::from)
 			.filter(|v| *v != Vec2::ZERO)
 			.collect::<Vec<_>>();
@@ -121,41 +122,45 @@ mod map {
 
 	impl Map<Tile> {
 		pub fn move_all(&mut self, movements: Vec<Vec2>, expanded: bool) {
-			let move_once = if expanded {
-				Self::expanded_move_once
+			let move_box = if expanded {
+				Self::expanded_move_box
 			} else {
-				Self::move_once
+				Self::move_box
 			};
+
+			if expanded {
+				self.expand();
+			}
 
 			let mut pos = self.find_all(Tile::Robot)[0].sign();
 
 			for dir in movements {
+				println!("{}\n{}\n", String::from(dir), String::from(self.clone()));
+				sleep(0.5);
+
 				let next_pos = pos + dir;
 
 				if let Some(next_tile) = self.at(&next_pos) {
 					match next_tile {
-						Tile::Empty => self.move_robot(&mut pos, &next_pos),
-						Tile::Box(_) => move_once(self, &mut pos, &dir),
+						Tile::Empty => self.move_robot(&mut pos, &dir),
+						Tile::Box(_) => move_box(self, &mut pos, &dir),
 						Tile::Obstacle => {}
 						Tile::Robot => unimplemented!(),
 					}
 				}
-
-				println!("{}\n{}\n", String::from(dir), String::from(self.clone()));
 			}
 		}
 
-		fn move_once(&mut self, pos: &mut Vec2, dir: &Vec2) {
+		fn move_box(&mut self, pos: &mut Vec2, dir: &Vec2) {
 			let mut search_index = 2;
 
 			loop {
-				let next_pos = *pos + *dir;
 				let search_pos = *pos + *dir * search_index;
 
 				if let Some(search_tile) = self.at(&search_pos) {
 					match search_tile {
 						Tile::Empty => {
-							self.move_robot(pos, &next_pos);
+							self.move_robot(pos, dir);
 							self.set_at(&search_pos, Tile::Box(false));
 							break;
 						}
@@ -170,35 +175,47 @@ mod map {
 			}
 		}
 
-		fn expanded_move_once(&mut self, pos: &mut Vec2, dir: &Vec2) {
-            // todo: movements[x].1 is constant (=dir), => turn into Vec<Vec2>
-			let movements: Vec<(Vec2, Vec2)> = vec![];
+		fn expanded_move_box(&mut self, pos: &mut Vec2, dir: &Vec2) {
+			// todo: movements[x].1 is constant (=dir), => turn into Vec<Vec2>
+			let mut movements: Vec<Vec2> = vec![];
 
 			// direction is horizontal
 			if dir.x != 0 {
 				let mut i = 1;
 				loop {
-					todo!();
+					let next_pos = *pos + *dir * i;
+					let next_tile = self.at(&next_pos).unwrap();
+
+					match next_tile {
+						Tile::Empty => break,
+						Tile::Box(_) => movements.push(next_pos),
+						Tile::Obstacle => return,
+						Tile::Robot => unimplemented!(),
+					};
+
 					i += 1;
 				}
 			} else {
 				todo!()
 			}
 
-			for (pos, next_pos) in movements.iter().rev() {
-				self.move_tile(&pos, &next_pos);
+			for pos in movements.iter().rev() {
+				self.move_tile(pos, dir);
 			}
+
+			self.move_robot(pos, dir);
 		}
 
-		fn move_tile(&mut self, pos: &Vec2, next_pos: &Vec2) {
+		fn move_tile(&mut self, pos: &Vec2, dir: &Vec2) {
+			let next_pos = *pos + *dir;
 			let tile = *self.at(pos).unwrap();
 			self.set_at(pos, Tile::Empty);
-			self.set_at(next_pos, tile);
+			self.set_at(&next_pos, tile);
 		}
 
-		fn move_robot(&mut self, pos: &mut Vec2, next_pos: &Vec2) {
-			self.move_tile(pos, next_pos);
-			*pos = *next_pos;
+		fn move_robot(&mut self, pos: &mut Vec2, dir: &Vec2) {
+			self.move_tile(pos, dir);
+			*pos = *pos + *dir;
 		}
 
 		fn expand(&mut self) {
@@ -214,17 +231,6 @@ mod map {
 			self.width *= 2;
 		}
 
-		fn contract(&mut self) {
-			self.values = self
-				.values
-				.iter()
-				.enumerate()
-				.filter_map(|(i, &tile)| if i % 2 == 0 { Some(tile) } else { None })
-				.collect();
-
-			self.width /= 2;
-		}
-
 		pub fn gps_sum(&self) -> usize {
 			self.find_all(Tile::Box(false))
 				.iter()
@@ -236,7 +242,7 @@ mod map {
 
 pub fn part1() -> usize {
 	let (mut map, movements) = parsing::parse(INPUT);
-	map.move_all(movements, false);
+	map.move_all(movements, true);
 	println!("{}", String::from(map.clone()));
 	map.gps_sum()
 }
@@ -254,7 +260,7 @@ const INPUT3: &str = "
 #....#
 ######
 
->>>>>
+>>>>>>v>>>>
 ";
 
 const INPUT2: &str = "
