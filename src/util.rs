@@ -39,6 +39,18 @@ pub mod vec2 {
 			[-Vec2::Y, Vec2::X, Vec2::Y, -Vec2::X]
 		}
 
+		pub fn as_str(&self) -> &str {
+			let Self { x, y } = self;
+			match (x, y) {
+				(0, 0) => "o",
+				(0, -1) => "^",
+				(1, 0) => ">",
+				(0, 1) => "v",
+				(-1, 0) => "<",
+				_ => "*",
+			}
+		}
+
 		pub const X: Self = Self { x: 1, y: 0 };
 		pub const Y: Self = Self { x: 0, y: 1 };
 		pub const ZERO: Self = Self { x: 0, y: 0 };
