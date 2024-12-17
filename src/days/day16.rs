@@ -48,30 +48,35 @@ impl Map<bool> {
 			map: self.clone(),
 		};
 
-		let mut exploring: Vec<Reindeer> = vec![pioneer];
+		let mut reindeers: Vec<Reindeer> = vec![pioneer];
 		let mut min_score = usize::MAX;
 
 		let advances = vec![(0, 1), (1, 1001), (-1, 1001)];
 
-		// todo: do BFS instead of DFS
+		// todo: statically analyze maze (turning points) to optimize path
 
-		while let Some(reindeer) = exploring.pop() {
-			if reindeer.pos == end && reindeer.score < min_score {
-				min_score = reindeer.score;
-				continue;
-			}
+		while !reindeers.is_empty() {
+			let mut new_reindeers: Vec<Reindeer> = vec![];
 
-			for &(dir_incr, score_incr) in &advances {
-				if let Some(explorer) = reindeer.advance(dir_incr, score_incr) {
-					if explorer.score < min_score {
-						exploring.push(explorer);
+			while let Some(reindeer) = reindeers.pop() {
+				if reindeer.pos == end && reindeer.score < min_score {
+					min_score = reindeer.score;
+				} else {
+					for &(dir_incr, score_incr) in &advances {
+						if let Some(reindeer) = reindeer.advance(dir_incr, score_incr) {
+							if reindeer.score < min_score {
+								new_reindeers.push(reindeer);
+							}
+						}
 					}
 				}
 			}
 
-			println!("{}", "#".repeat(exploring.len()));
-			// self.print(&exploring);
-			// sleep(0.1);
+			reindeers = new_reindeers;
+
+			self.print(&reindeers);
+			sleep(0.1);
+			println!("{}\n", "*".repeat(reindeers.len().clamp(0, 120)));
 		}
 
 		min_score
