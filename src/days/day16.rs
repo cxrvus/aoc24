@@ -49,31 +49,32 @@ impl Map<bool> {
 		};
 
 		let mut exploring: Vec<Reindeer> = vec![pioneer];
-		let mut finished: Vec<usize> = vec![];
+		let mut min_score = usize::MAX;
+
+		let advances = vec![(0, 1), (1, 1001), (-1, 1001)];
+
+		// todo: do BFS instead of DFS
 
 		while let Some(reindeer) = exploring.pop() {
-			self.print(&exploring);
-			sleep(1.1);
-
-			if reindeer.pos == end {
-				finished.push(reindeer.score);
+			if reindeer.pos == end && reindeer.score < min_score {
+				min_score = reindeer.score;
 				continue;
 			}
 
-			if let Some(explorer) = reindeer.advance(0, 1) {
-				exploring.push(explorer);
+			for &(dir_incr, score_incr) in &advances {
+				if let Some(explorer) = reindeer.advance(dir_incr, score_incr) {
+					if explorer.score < min_score {
+						exploring.push(explorer);
+					}
+				}
 			}
 
-			if let Some(explorer) = reindeer.advance(1, 1000) {
-				exploring.push(explorer);
-			}
-
-			if let Some(explorer) = reindeer.advance(-1, 1000) {
-				exploring.push(explorer);
-			}
+			println!("{}", "#".repeat(exploring.len()));
+			// self.print(&exploring);
+			// sleep(0.1);
 		}
 
-		*finished.iter().min().unwrap()
+		min_score
 	}
 
 	fn start_end(&self) -> (Vec2, Vec2) {
@@ -121,7 +122,7 @@ impl Map<bool> {
 
 pub fn part1() -> usize {
 	ProxyMap::from(INPUT)
-		.convert::<bool>(|string| dbg!(string).bytes().map(|x| x != b'#').collect())
+		.convert::<bool>(|string| string.bytes().map(|x| x != b'#').collect())
 		.get_lowest_score()
 }
 
@@ -129,9 +130,9 @@ pub fn part2() -> usize {
 	todo!()
 }
 
-const INPUT: &str = INPUT2;
+const INPUT: &str = INPUT1;
 
-const INPUT2: &str = "
+const INPUT3: &str = "
 #####
 #..E#
 #..##
@@ -139,7 +140,7 @@ const INPUT2: &str = "
 #####
 ";
 
-const INPUT1: &str = "
+const INPUT2: &str = "
 ###############
 #.......#....E#
 #.#.###.#.###.#
@@ -155,6 +156,26 @@ const INPUT1: &str = "
 #.###.#.#.#.#.#
 #S..#.....#...#
 ###############
+";
+
+const INPUT1: &str = "
+#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################
 ";
 
 const INPUT0: &str = "
