@@ -62,7 +62,7 @@ impl Map {
 
 							if !self.in_bounds(&antinode) {
 								break;
-							} else if !antinodes.iter().any(|x| *x == antinode) {
+							} else if !antinodes.contains(&antinode) {
 								antinodes.push(antinode);
 							}
 
